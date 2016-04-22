@@ -1,7 +1,7 @@
-cs537 project - group 11  
+# CS537 Project - Group 11  
 members:  
-seung hyuk kim
+seung hyuk kim  
 peter rodriguez  
-prashant krishnan
+prashant krishnan  
 arpan patel  
 
