@@ -111,11 +111,10 @@ public class ROVER_11 {
         destinations.add(new Coord(17, 12));
         destinations.add(new Coord(19, 15));
         destinations.add(new Coord(19, 18));
-        destinations.add(new Coord(21, 19));
-        destinations.add(new Coord(22, 21));
-
         destinations.add(new Coord(20, 17));
-        destinations.add(new Coord(45, 45));
+        destinations.add(new Coord(21, 16));
+        destinations.add(new Coord(22, 18));
+
         Coord destination = destinations.poll();
 
 
