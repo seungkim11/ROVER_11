@@ -98,22 +98,23 @@ public class ROVER_11 {
 
         // Get destinations from Sensor group. I am a driller!
         Queue<Coord> destinations = new LinkedList<>();
-        destinations.add(new Coord(5, 15));
-        destinations.add(new Coord(7, 16));
-        destinations.add(new Coord(8, 17));
-        destinations.add(new Coord(10, 17));
-        destinations.add(new Coord(7, 19));
+        destinations.add(new Coord(5, 16));
+        destinations.add(new Coord(7, 17));
+        destinations.add(new Coord(8, 18));
+        destinations.add(new Coord(10, 18));
         destinations.add(new Coord(7, 20));
-        destinations.add(new Coord(13, 18));
-        destinations.add(new Coord(13, 23));
-        destinations.add(new Coord(14, 15));
-        destinations.add(new Coord(16, 11));
-        destinations.add(new Coord(17, 12));
-        destinations.add(new Coord(19, 15));
-        destinations.add(new Coord(19, 18));
-        destinations.add(new Coord(20, 17));
-        destinations.add(new Coord(21, 16));
-        destinations.add(new Coord(22, 18));
+        destinations.add(new Coord(7, 21));
+        destinations.add(new Coord(13, 19));
+        destinations.add(new Coord(13, 24));
+        destinations.add(new Coord(14, 16));
+        destinations.add(new Coord(16, 12));
+        destinations.add(new Coord(17, 13));
+        destinations.add(new Coord(19, 16));
+        destinations.add(new Coord(19, 19));
+        destinations.add(new Coord(20, 18));
+        destinations.add(new Coord(21, 17));
+        destinations.add(new Coord(22, 19));
+        destinations.add(new Coord(45, 45));
 
         Coord destination = destinations.poll();
 
