@@ -93,28 +93,99 @@ public class ROVER_11 {
         Coord previousLoc = null;
 
 
+        Coord rovergroupStartPosition = null;
+        Coord targetLocation = null;
+
+        // **** Request START_LOC Location from SwarmServer ****
+        out.println("START_LOC");
+        line = in.readLine();
+        if (line == null) {
+            System.out.println(rovername + " check connection to server");
+            line = "";
+        }
+        if (line.startsWith("START_LOC")) {
+            rovergroupStartPosition = extractLocationFromString(line);
+        }
+        System.out.println(rovername + " START_LOC " + rovergroupStartPosition);
+
+
+        // **** Request TARGET_LOC Location from SwarmServer ****
+        out.println("TARGET_LOC");
+        line = in.readLine();
+        if (line == null) {
+            System.out.println(rovername + " check connection to server");
+            line = "";
+        }
+        if (line.startsWith("TARGET_LOC")) {
+            targetLocation = extractLocationFromString(line);
+        }
+        System.out.println(rovername + " TARGET_LOC " + targetLocation);
+
+
+
+
+
         // ******* destination *******
-        // TODO: implement destination assessment - go fetch science!
+        // TODO:
 
         // Get destinations from Sensor group. I am a driller!
         Queue<Coord> destinations = new LinkedList<>();
-        destinations.add(new Coord(5, 16));
-        destinations.add(new Coord(7, 17));
-        destinations.add(new Coord(8, 18));
-        destinations.add(new Coord(10, 18));
+        destinations.add(new Coord(5, 15));
+        destinations.add(new Coord(7, 16));
+        destinations.add(new Coord(8, 17));
+        destinations.add(new Coord(10, 17));
+        destinations.add(new Coord(7, 19));
         destinations.add(new Coord(7, 20));
-        destinations.add(new Coord(7, 21));
-        destinations.add(new Coord(13, 19));
-        destinations.add(new Coord(13, 24));
-        destinations.add(new Coord(14, 16));
-        destinations.add(new Coord(16, 12));
-        destinations.add(new Coord(17, 13));
-        destinations.add(new Coord(19, 16));
-        destinations.add(new Coord(19, 19));
-        destinations.add(new Coord(20, 18));
-        destinations.add(new Coord(21, 17));
-        destinations.add(new Coord(22, 19));
+        destinations.add(new Coord(13, 18));
+        destinations.add(new Coord(13, 23));
+        destinations.add(new Coord(14, 15));
+        destinations.add(new Coord(16, 11));
+        destinations.add(new Coord(17, 12));
+        destinations.add(new Coord(19, 15));
+        destinations.add(new Coord(19, 18));
+        destinations.add(new Coord(20, 17));
+        destinations.add(new Coord(21, 16));
+        destinations.add(new Coord(22, 18));
+        destinations.add(new Coord(20, 4));
+        destinations.add(new Coord(23, 5));
+        destinations.add(new Coord(25, 4));
+//        destinations.add(new Coord(28, 6)); sand
+        destinations.add(new Coord(27, 8));
+        destinations.add(new Coord(29, 9));
+        destinations.add(new Coord(29, 10));
+        destinations.add(new Coord(31, 6));
+        destinations.add(new Coord(38, 17));
+        destinations.add(new Coord(39, 18));
+        destinations.add(new Coord(40, 18));
+        destinations.add(new Coord(30, 21));
+        destinations.add(new Coord(30, 26));
+        destinations.add(new Coord(29, 29));
+        destinations.add(new Coord(32, 34));
+        destinations.add(new Coord(26, 37));
+        destinations.add(new Coord(30, 43));
+        destinations.add(new Coord(31, 44));
+        destinations.add(new Coord(32, 43));
+        destinations.add(new Coord(39, 42));
+        destinations.add(new Coord(41, 43));
+        destinations.add(new Coord(43, 42));
+        destinations.add(new Coord(44, 43));
+        destinations.add(new Coord(45, 43));
+        destinations.add(new Coord(45, 44));
         destinations.add(new Coord(45, 45));
+        destinations.add(new Coord(46, 45));
+        destinations.add(new Coord(45, 46));
+        destinations.add(new Coord(44, 47));
+        destinations.add(new Coord(42, 47));
+        destinations.add(new Coord(42, 46));
+        destinations.add(new Coord(43, 46));
+        destinations.add(new Coord(42, 45));
+        destinations.add(new Coord(43, 44));
+        destinations.add(new Coord(40, 44));
+        destinations.add(new Coord(39, 45));
+        destinations.add(new Coord(39, 46));
+        destinations.add(new Coord(40, 46));
+
+        destinations.add(rovergroupStartPosition);
 
         Coord destination = destinations.poll();
 
@@ -135,7 +206,7 @@ public class ROVER_11 {
             }
             if (line.startsWith("LOC")) {
                 // loc = line.substring(4);
-                currentLoc = extractLOC(line);
+                currentLoc = extractLocationFromString(line);
             }
             System.out.println(rovername + " currentLoc at start: " + currentLoc);
 
@@ -204,7 +275,7 @@ public class ROVER_11 {
             if (line.startsWith("LOC")) {
 
 
-                currentLoc = extractLOC(line);
+                currentLoc = extractLocationFromString(line);
             }
 
             //System.out.println("ROVER_11 currentLoc after recheck: " + currentLoc);
@@ -212,7 +283,9 @@ public class ROVER_11 {
 
             // test for stuckness
             stuck = currentLoc.equals(previousLoc);
-
+//            if (stuck){
+//                destination = destinations.poll();
+//            }
             //System.out.println("ROVER_11 stuck test " + stuck);
             //System.out.println(rovername + " blocked test " + blocked);
 
@@ -495,10 +568,12 @@ public class ROVER_11 {
     }
 
 
-    // this takes the LOC response string, parses out the x and x values and
+    // this takes the server response string, parses out the x and x values and
     // returns a Coord object
-    public static Coord extractLOC(String sStr) {
-        sStr = sStr.substring(4);
+    public static Coord extractLocationFromString(String sStr) {
+        int indexOf;
+        indexOf = sStr.indexOf(" ");
+        sStr = sStr.substring(indexOf +1);
         if (sStr.lastIndexOf(" ") != -1) {
             String xStr = sStr.substring(0, sStr.lastIndexOf(" "));
             //System.out.println("extracted xStr " + xStr);
@@ -509,7 +584,6 @@ public class ROVER_11 {
         }
         return null;
     }
-
 
     /**
      * Runs the client
