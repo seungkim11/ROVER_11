@@ -77,6 +77,11 @@ public class MapTile {
 	public void setHasRoverTrue(){
 		this.hasRover = true;
 	}
+
+	// for Astar implemenation, self position has rover false
+	public void setHasRoverFalse(){
+		this.hasRover = false;
+	}
 	
 	public void setSciecne(Science sci){
 		this.science = sci;
