@@ -126,10 +126,12 @@ public class ROVER_11 {
 
 
         // ******* destination *******
-        // TODO:
+        // TODO: Sort destination depending on current Location
 
         // Get destinations from Sensor group. I am a driller!
         Queue<Coord> destinations = new LinkedList<>();
+        Queue<Coord> blockedDestinations = new LinkedList<>();
+
         destinations.add(new Coord(5, 15));
         destinations.add(new Coord(7, 16));
         destinations.add(new Coord(8, 17));
@@ -149,7 +151,7 @@ public class ROVER_11 {
         destinations.add(new Coord(20, 4));
         destinations.add(new Coord(23, 5));
         destinations.add(new Coord(25, 4));
-//        destinations.add(new Coord(28, 6)); sand
+        destinations.add(new Coord(28, 6)); //sand
         destinations.add(new Coord(27, 8));
         destinations.add(new Coord(29, 9));
         destinations.add(new Coord(29, 10));
@@ -233,16 +235,47 @@ public class ROVER_11 {
 
             // ***** MOVING *****
 
+            // TODO: validate target: as updating fieldmap, validate if target still contains science
+
             // our starting position is xpos=1, ypos=5
             // direction Queue for direction
-
-
             List<String> moves = Astar(currentLoc, destination, scanMapTiles);
 
             System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
             System.out.println(rovername + " moves: " + moves.toString());
+
+            // if moving
             if (!moves.isEmpty()) {
                 out.println("MOVE " + moves.get(0));
+
+
+
+                // if rover is next to the target
+                // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
+                if (getDistance(currentLoc, destination) < 101){
+                    System.out.println("Can reach Target. Going ");
+
+                    // if destination is walkable
+                    if (fieldMap.get(destination) == 1){
+                        System.out.println("Target Reachable");
+                    }else{
+                        // Target is not walkable (hasRover, or sand)
+                        // then go to next destination, push current destination to end
+                        // TODO: handle the case when the destiation is blocked permanently
+                        // TODO: also, what if the destination is already taken? update fieldmap and dont go there
+
+                        // blocked destination is added to blockedDestianions queue
+                        blockedDestinations.add(destination);
+
+                        // move to new destination
+                        destination = destinations.poll();
+                        System.out.println("Target blocked. Switch target to: " + destination);
+                    }
+
+                }
+
+
+
             } else {
                 // check if rover is at the destination, drill
                 if (currentLoc.equals(destination)) {
@@ -257,7 +290,7 @@ public class ROVER_11 {
 
                 } else {
 
-//                    // TODO: path blocked.
+                      // TODO: path blocked.
 //                    String move = cardinals[(int) (Math.random() * 4)];
 //                    System.out.println("MOVE " + move);
 //                    out.println("MOVE " + move);
