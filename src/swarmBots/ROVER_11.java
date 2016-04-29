@@ -6,6 +6,8 @@ import com.google.gson.reflect.TypeToken;
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
+
+import enums.Science;
 import enums.Terrain;
 import javafx.scene.layout.Priority;
 
@@ -28,7 +30,7 @@ public class ROVER_11 {
     int sleepTime;
     String SERVER_ADDRESS = "localhost";
     static final int PORT_ADDRESS = 9537;
-    Map<Coord, Integer> fieldMap;
+    Map<Coord, MapTile> fieldMap;
 
     public ROVER_11() {
         // constructor
@@ -122,9 +124,6 @@ public class ROVER_11 {
         System.out.println(rovername + " TARGET_LOC " + targetLocation);
 
 
-
-
-
         // ******* destination *******
         // TODO: Sort destination depending on current Location
 
@@ -132,12 +131,14 @@ public class ROVER_11 {
         Queue<Coord> destinations = new LinkedList<>();
         Queue<Coord> blockedDestinations = new LinkedList<>();
 
+
         destinations.add(new Coord(5, 15));
         destinations.add(new Coord(7, 16));
         destinations.add(new Coord(8, 17));
         destinations.add(new Coord(10, 17));
         destinations.add(new Coord(7, 19));
         destinations.add(new Coord(7, 20));
+        destinations.add(new Coord(5, 15)); // has no science anymore. duplicate
         destinations.add(new Coord(13, 18));
         destinations.add(new Coord(13, 23));
         destinations.add(new Coord(14, 15));
@@ -191,7 +192,6 @@ public class ROVER_11 {
 
         Coord destination = destinations.poll();
 
-
         // start Rover controller process
         while (true) {
 
@@ -235,7 +235,11 @@ public class ROVER_11 {
 
             // ***** MOVING *****
 
-            // TODO: validate target: as updating fieldmap, validate if target still contains science
+//            // TODO: CANT validate target science. Our walker is blind :(
+//            if (hasNoScience(fieldMap.get(destination))){
+//                System.out.println("has no science. moving to next destination");
+//                destination = destinations.poll();
+//            }
 
             // our starting position is xpos=1, ypos=5
             // direction Queue for direction
@@ -256,7 +260,7 @@ public class ROVER_11 {
                     System.out.println("Can reach Target. Going ");
 
                     // if destination is walkable
-                    if (fieldMap.get(destination) == 1){
+                    if (validateTile(fieldMap.get(destination))){
                         System.out.println("Target Reachable");
                     }else{
                         // Target is not walkable (hasRover, or sand)
@@ -333,6 +337,7 @@ public class ROVER_11 {
     }
 
 
+
     // ******* Search Methods
     public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
         PriorityQueue<Node> open = new PriorityQueue<>();
@@ -360,7 +365,7 @@ public class ROVER_11 {
 
             for (Coord c : getAdjacentCoordinates(u.getCoord(), scanMapTiles, current)) {
                 // if this node hasn't already been checked
-                if (!closed.contains(new Node(c, 0)) && fieldMap.get(c) != null && fieldMap.get(c) != 0) {
+                if (!closed.contains(new Node(c, 0)) && fieldMap.get(c) != null && validateTile(fieldMap.get(c))) {
 
                     // TODO: MAYBE: assess cost depending on the tile's terrain, science, etc
                     double g = u.getData() + 1; // each move cost is 1, for now
@@ -482,28 +487,45 @@ public class ROVER_11 {
                 int xp = currentLoc.xpos - centerIndex + col;
                 int yp = currentLoc.ypos - centerIndex + row;
                 Coord coord = new Coord(xp, yp);
-                fieldMap.put(coord, analyzeTile(mapTile, coord));
+                fieldMap.put(coord, mapTile);
             }
         }
         // put my current position so it is walkable
-        fieldMap.put(currentLoc, 1);
+        MapTile currentMapTile = scanMapTiles[centerIndex][centerIndex].getCopyOfMapTile();
+        currentMapTile.setHasRoverFalse();
+        fieldMap.put(currentLoc, currentMapTile);
     }
 
     public int updateScanMapIndex(int currentLoc, int traceLoc, int edgeSize) {
         return ((edgeSize - 1) / 2) + (currentLoc - traceLoc);
     }
 
-    // check if my rover can pass: 1: pass, 0: no pass,
-    // TODO: implement if this terrain has science
-    public int analyzeTile(MapTile maptile, Coord coord) {
+    // not valid to blind walker
+    private boolean hasNoScience(MapTile mapTile) {
+        System.out.println("destination maptile: " + mapTile);
+
+        if (mapTile == null){
+            return false;
+        }
+        if (mapTile.getScience() == null){
+            System.out.println("destination not revealed.");
+            return false;
+        }
+        System.out.println("science at destination: " + mapTile.getScience());
+        return mapTile.getScience() == Science.NONE;
+    }
+
+
+
+    public boolean validateTile(MapTile maptile) {
 //        System.out.println("hasrover: " + maptile.getHasRover() + ", terrain: " + maptile.getTerrain());
         Terrain terrain = maptile.getTerrain();
         boolean hasRover = maptile.getHasRover();
 
         if (hasRover || terrain == Terrain.NONE || terrain == Terrain.SAND) {
-            return 0;
+            return false;
         }
-        return 1;
+        return true;
     }
 
 
