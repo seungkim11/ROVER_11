@@ -1,11 +1,16 @@
-//By Peter Bryan Rodriguez
+//By PBR
+//
 //Communication Server For Green Corp
 var express = require("express");
 var bodyParser = require("body-parser");
+var mongo= require("mongodb");
+var http=require('http');
 var app = express();
 
-
-//a user will send their xy coordinates and get back the science
+var mongojs = require('mongojs')
+var db = mongojs('test', ['test']);
+var scienceDB = db.collection('test');
+//a user will send their xy sciencecoordinates and get back the science
 //in order from closest and on using distance heursitic
 var science = [
     //Sample Data
@@ -27,25 +32,38 @@ app.use(function(req, res, next) {
 	next();
 });
 
-//app.use(express.static("./public"));
 
-//app.use(cors());
 
 app.get("/allScience", function(req, res) {
-	res.json(science);
+	res.json(science); //for now
+//this currently returns the hardcoded value.
 });
 
-app.post("/allScience", function(req, res) {
-	//I need to do checking here to make sure it is all in the right format
-	console.log(req.body);
-	//extract variables
+ app.get('/',function(req,res){
+ 	res.writeHead(200,{"Content-Type":"text"});
+ 	res.write("Ok..., type a / and a tool name your bot has to obtain available resources. \n For example: 192.168.1.1:3000/harvester ");
+ 	res.end();
 
-	//put data in an JSONobject data_;
+ });
+
+app.get('/:tool', function(req,res){
+	scienceDB.find({"tool": req.params.tool,"stillExists": true}).toArray(function(err,docs){
+		if(err) throw err;
+		(res.send(docs));
+	});
+});
+
+	 ////
+	////POST
+   ////
+app.post("/allScience", function(req, res) {
+	console.log(req.body);
 	data_={};
 	science.push(data_);
-    //science.push(req.body); 
     res.json(science);
 });
+
+
 
 app.listen(3000);
 

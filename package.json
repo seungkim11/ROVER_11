@@ -13,6 +13,8 @@
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.14.1",
-    "express": "^4.13.3"
+    "express": "^4.13.3",
+    "mongodb": "*",
+    "mongojs": "^2.4.0"
   }
 }
