@@ -180,7 +180,7 @@ app.post("/scout", function(req, res) {
 /// of a harvested science [by x, and y] and changes it's stillExists condition to 'false'
 //
 // Update May 2nd, 4:48AM - Not done and not tested.
-
+/*
 app.post("/gather", function(req, res) {
 		//Method will check if it's there
 
@@ -209,7 +209,7 @@ app.post("/gather", function(req, res) {
 				};	
 	});
 }); //post end.
-
+*/
 
 //TODO: Update methods for scanning squares with sciences to make sure they are still there
 //or to notify that they no longer exist if other team grabs them.
