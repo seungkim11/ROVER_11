@@ -1,5 +1,5 @@
 //By PBR 
-//
+// Group 11
 //Communication Server For Green Corp
 var express = require("express");
 var bodyParser = require("body-parser");
@@ -37,7 +37,7 @@ app.use(function(req, res, next) {
 	//Instructions incase someone hits the :3000 server without api.
  app.get('/',function(req,res){
  	res.writeHead(200,{"Content-Type":"text"});
- 	res.write("Ok..., type a / then a vehicle type (wheel, walker, tread followed by a /and a tool name you have(harvester or drill).  \n For example: 192.168.1.222:3000/walker/harvester \n If you have two tools type 'both' as the tool, in this format: 192.168.1.222:3000/tread/both \n if you're a scout, send POST JSON requests to http:://192.168.1.222:3000/scout \n If you are testing you can use localhost:3000/globalMap for now. \nP.S. Everything is Case Sensitive, user lowerCase. \n");
+ 	res.write("Ok..., type a / then a vehicle type (wheel, walker, tread followed by a /and a tool name you have(harvester or drill).\n (replace 192.168.1.222 with localhost if testing server on your own machine)  \n For example: 192.168.1.222:3000/walker/harvester \n If you have two tools type 'both' as the tool, in this format: 192.168.1.222:3000/tread/both \n if you're a scout, send POST JSON requests to http:://192.168.1.222:3000/scout \n If you are testing you can use localhost:3000/globalMap for now. \nP.S. Everything is Case Sensitive, user lowerCase. \n");
  	res.end();
 
  });
@@ -141,7 +141,7 @@ app.get('/globalMap', function(req,res){
 
 
 	 ////
-	////POST method Has not Been Implemented Yet.
+	////POST method for scouts.
    ////
 app.post("/scout", function(req, res) {
 		//Method will check if it's there
