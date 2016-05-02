@@ -22,7 +22,6 @@ var science = [
         terrain: "sand",
         science: "crystal",  
         stillExists: true
-
     }
     
 ];
@@ -128,7 +127,6 @@ app.get('/:vehicle/:tool', function(req,res){
 	 		});
 		break;
 	}
-
  }); // 1 tool api end.
 
 
@@ -156,22 +154,20 @@ app.post("/scout", function(req, res) {
 	data_.stillExists=req.body.stillExists;
 	//first query if it's there.
 	scienceDB.find({"x":req.body.x,"y":req.body.y},function(err,docs){
-	 		if(err) throw err;
-	 		console.log(docs);
-		 		if(docs.length>0){
-		 			console.log("Science already exists in database");
-		 		}
+	 	if(err) throw err;
+	 	console.log(docs);
+		 	if(docs.length>0){
+		 		console.log("Science already exists in database");
+		 	}
 
-		 		else{
-		 			console.log("inserting the following data to databse:");
-					console.log(data_);
-					scienceDB.insert(data_,function(err,docs){
-					 	if(err) { throw err; }
-					 		res.send(docs);
-					 		console.log("science succcessfully inserted");
+		 	else{
+		 		console.log("inserting the following data to databse:");
+				console.log(data_);
+				scienceDB.insert(data_,function(err,docs){
+					 if(err) { throw err; }
+					 	res.send(docs);
+					 	console.log("science succcessfully inserted");
 				 	});
-
-		
 				};	
 	});
 }); //post end.
@@ -180,36 +176,36 @@ app.post("/scout", function(req, res) {
 /// of a harvested science [by x, and y] and changes it's stillExists condition to 'false'
 //
 // Update May 2nd, 4:48AM - Not done and not tested.
-/*
-app.post("/gather", function(req, res) {
-		//Method will check if it's there
 
-	var data_={};
-	data_.x=req.body.x;
-	data_.y=req.body.y;
-	data_.terrain=req.body.terrain;
-	data_.science=req.body.science;
-	data_.stillExists=req.body.stillExists;
-	console.log("recieving gather post request with data:\n"+req.body);
-	//first query if it's there.
-	scienceDB.findAndModify({
-		query: {"x":req.body.x,"y":req.body.y,"stillExists":true},
-		update: {stillExists:false}
-		},function(err,docs){
-	 		if(err) throw err;
-	 		console.log(docs);
-		 		if(docs.length>0){
-		 			console.log("about to change exists to false");
-		 			//good to update it here.
-		 		}
+// app.post("/gather", function(req, res) {
+// 		//Method will check if it's there
 
-		 		else{
-		 			console.log("bad request, either science not in database or already harvested");
+// 	var data_={};
+// 	data_.x=req.body.x;
+// 	data_.y=req.body.y;
+// 	data_.terrain=req.body.terrain;
+// 	data_.science=req.body.science;
+// 	data_.stillExists=req.body.stillExists;
+// 	console.log("recieving gather post request with data:\n"+req.body);
+// 	//first query if it's there.
+// 	scienceDB.findAndModify({
+// 		query: {"x":req.body.x,"y":req.body.y,"stillExists":true},
+// 		update: {stillExists:false}
+// 		},function(err,docs){
+// 	 		if(err) throw err;
+// 	 		console.log(docs);
+// 		 		if(docs.length>0){
+// 		 			console.log("about to change exists to false");
+// 		 			//good to update it here.
+// 		 		}
+
+// 		 		else{
+// 		 			console.log("bad request, either science not in database or already harvested");
 		
-				};	
-	});
-}); //post end.
-*/
+// 				};	
+// 	});
+// }); //post end.
+
 
 //TODO: Update methods for scanning squares with sciences to make sure they are still there
 //or to notify that they no longer exist if other team grabs them.
