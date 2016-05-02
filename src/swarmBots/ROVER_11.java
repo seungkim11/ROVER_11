@@ -138,7 +138,6 @@ public class ROVER_11 {
         destinations.add(new Coord(10, 17));
         destinations.add(new Coord(7, 19));
         destinations.add(new Coord(7, 20));
-        destinations.add(new Coord(5, 15)); // has no science anymore. duplicate
         destinations.add(new Coord(13, 18));
         destinations.add(new Coord(13, 23));
         destinations.add(new Coord(14, 15));
@@ -235,12 +234,6 @@ public class ROVER_11 {
 
             // ***** MOVING *****
 
-//            // TODO: CANT validate target science. Our walker is blind :(
-//            if (hasNoScience(fieldMap.get(destination))){
-//                System.out.println("has no science. moving to next destination");
-//                destination = destinations.poll();
-//            }
-
             // our starting position is xpos=1, ypos=5
             // direction Queue for direction
             List<String> moves = Astar(currentLoc, destination, scanMapTiles);
@@ -251,8 +244,6 @@ public class ROVER_11 {
             // if moving
             if (!moves.isEmpty()) {
                 out.println("MOVE " + moves.get(0));
-
-
 
                 // if rover is next to the target
                 // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
