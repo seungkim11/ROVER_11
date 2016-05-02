@@ -13,18 +13,21 @@ var scienceDB = db.collection('test');
 
 
 //This is an example reminder of how the JSON objects look:
-
-var science = [
+//case sensitive
+var science=
     //Sample Data
     {
-        x:12,
-        y:14,
-        terrain: "sand",
-        science: "crystal",  
-        stillExists: true
+        "x":12,
+        "y":14,
+        "terrain": "sand", // gravel, soild, rock,
+        "science": "crystal",  //organic, radioactive, mineral
+        "stillExists": true  //should be set to true when first seen by sensors
     }
     
-];
+//Ex 2:
+/* 
+{"x": 77, "y": 11, "terrain": "gravel", "science": "organic", "stillExists": true} 
+*/
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -168,7 +171,7 @@ app.post("/scout", function(req, res) {
 					 	res.send(docs);
 					 	console.log("science succcessfully inserted");
 				 	});
-				};	
+			};	
 	});
 }); //post end.
 
