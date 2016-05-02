@@ -1,4 +1,4 @@
-//By PBR
+//By PBR 
 //
 //Communication Server For Green Corp
 var express = require("express");
@@ -20,8 +20,9 @@ var science = [
         x:12,
         y:14,
         terrain: "sand",
-        tool: "harvester",
+        science: "crystal",  
         stillExists: true
+
     }
     
 ];
@@ -37,58 +38,26 @@ app.use(function(req, res, next) {
 	//Instructions incase someone hits the :3000 server without api.
  app.get('/',function(req,res){
  	res.writeHead(200,{"Content-Type":"text"});
- 	res.write("Ok..., type a / and a tool name your bot has to obtain available resources. \n For example: 192.168.1.222:3000/harvester/walker \n If you have two tools, try this format: 192.168.1.222:3000/harvester/thread/drill \n if you're a scout, send POST requests to http:://192.168.1.222:3000/scout");
+ 	res.write("Ok..., type a / then a vehicle type (wheel, walker, tread followed by a /and a tool name you have(harvester or drill).  \n For example: 192.168.1.222:3000/walker/harvester \n If you have two tools type 'both' as the tool, in this format: 192.168.1.222:3000/tread/both \n if you're a scout, send POST JSON requests to http:://192.168.1.222:3000/scout \n If you are testing you can use localhost:3000/globalMap for now. \nP.S. Everything is Case Sensitive, user lowerCase. \n");
  	res.end();
 
  });
 
 
-
-//If the user only has one tool, this is the API call they will use.
-
-app.get('/:tool/:vehicle', function(req,res){
-	//if being requested by a wheel
-
-	switch(req.params.vehicle){
-
-		case "wheel":
-			console.log("User requested results of wheels");
-			 	scienceDB.find({"tool": req.params.tool,"terrain": "normal", "stillExists": true}).toArray(function(err,docs){
-	 		if(err) throw err;
-	 		(res.send(docs));
-	 		});
-		break;
-
-		case "walker":
-			console.log("User requested results of walker");
-			scienceDB.find({"tool": req.params.tool,"terrain": {$in: ['rock', 'normal']}, "stillExists": true}).toArray(function(err,docs){
-	 		if(err) throw err;
-	 		(res.send(docs));
-	 		});
-		break;
-
-		case "tread":
-		console.log("User requested results of tread");
-		scienceDB.find({"tool": req.params.tool,"terrain": {$in: ['sand', 'normal']}, "stillExists": true}).toArray(function(err,docs){
-	 		if(err) throw err;
-	 		(res.send(docs));
-	 		});
-		break;
-	}
-
- }); // 1 tool api end.
-
+//Update: May 2nd 3:42AM - Might have to rework and rethink this section  and next because the JSON might return the 
+//science type now. the call should remain the same.
 
 
 //If the user has two tools, this is what they will use.
-app.get('/:tool/:vehicle/:tool2', function(req,res){
+//yes there is another way to have done this but its cool for now.
+app.get('/:vehicle/both', function(req,res){
 	//if being requested by a wheel
 
 	switch(req.params.vehicle){
 
 		case "wheel":
 			console.log("User requested results of wheels - 2 tools");
-			 	scienceDB.find({"tool": {$in:[req.params.tool, req.params.tool2]},"terrain": "normal", "stillExists": true}).toArray(function(err,docs){
+			 	scienceDB.find({"terrain": {$in:['soil','gravel']}, "stillExists": true}).toArray(function(err,docs){
 	 		if(err) throw err;
 	 		(res.send(docs));
 	 		});
@@ -96,7 +65,7 @@ app.get('/:tool/:vehicle/:tool2', function(req,res){
 
 		case "walker":
 			console.log("User requested results of walker- 2 tools");
-			scienceDB.find({"tool": {$in:[req.params.tool, req.params.tool2]},"terrain": {$in: ['rock', 'normal']}, "stillExists": true}).toArray(function(err,docs){
+			scienceDB.find({"terrain": {$in: ['rock', 'gravel','soil']}, "stillExists": true}).toArray(function(err,docs){
 	 		if(err) throw err;
 	 		(res.send(docs));
 	 		});
@@ -104,7 +73,7 @@ app.get('/:tool/:vehicle/:tool2', function(req,res){
 
 		case "tread":
 		console.log("User requested results of tread- 2 tools");
-		scienceDB.find({"tool": {$in:[req.params.tool, req.params.tool2]},"terrain": {$in: ['sand', 'normal']}, "stillExists": true}).toArray(function(err,docs){
+		scienceDB.find({"terrain": {$in: ['sand', 'gravel','soil']}, "stillExists": true}).toArray(function(err,docs){
 	 		if(err) throw err;
 	 		(res.send(docs));
 	 		});
@@ -115,15 +84,52 @@ app.get('/:tool/:vehicle/:tool2', function(req,res){
 
 
 
+//If the user only has one tool, this is the API call they will use.
 
+app.get('/:vehicle/:tool', function(req,res){
+	//if being requested by a wheel
 
-// 		/////For testing purposes i'll leave this older call
-// app.get('/:tool', function(req,res){
-// 	scienceDB.find({"tool": req.params.tool,"stillExists": true}).toArray(function(err,docs){
-// 		if(err) throw err;
-// 		(res.send(docs));
-// 	});
-// });
+	var _requestTerrain="";
+	switch(req.params.vehicle){
+
+		case "wheel":
+			console.log("User requested results of wheels");
+			if(req.params.tool==="drill")
+				_requestTerrain="gravel";
+			else if(req.params.tool==="harvester")
+				_requestTerrain="soil";
+			 	scienceDB.find({"terrain": _requestTerrain, "stillExists": true}).toArray(function(err,docs){
+	 		if(err) throw err;
+	 		(res.send(docs));
+	 		});
+		break;
+
+		case "walker":
+			console.log("User requested results of walker");
+			if(req.params.tool==="drill")
+				_requestTerrain="gravel";
+			else if(req.params.tool==="harvester")
+				_requestTerrain="soil";
+			scienceDB.find({"terrain": {$in: ['rock', _requestTerrain]}, "stillExists": true}).toArray(function(err,docs){
+	 		if(err) throw err;
+	 		(res.send(docs));
+	 		});
+		break;
+
+		case "tread":
+		console.log("User requested results of tread");
+		if(req.params.tool==="drill")
+				_requestTerrain="gravel";
+			else if(req.params.tool==="harvester")
+				_requestTerrain="soil";
+		scienceDB.find({"terrain": {$in: ['sand', _requestTerrain]}, "stillExists": true}).toArray(function(err,docs){
+	 		if(err) throw err;
+	 		(res.send(docs));
+	 		});
+		break;
+	}
+
+ }); // 1 tool api end.
 
 
 
@@ -140,23 +146,73 @@ app.get('/globalMap', function(req,res){
 	////POST method Has not Been Implemented Yet.
    ////
 app.post("/scout", function(req, res) {
-	
+		//Method will check if it's there
+
 	var data_={};
 	data_.x=req.body.x;
 	data_.y=req.body.y;
 	data_.terrain=req.body.terrain;
-	data_.tool=req.body.tool;
+	data_.science=req.body.science;
 	data_.stillExists=req.body.stillExists;
-	console.log("data_ looks like this:");
-	console.log(data_);
-	
-});
+	//first query if it's there.
+	scienceDB.find({"x":req.body.x,"y":req.body.y},function(err,docs){
+	 		if(err) throw err;
+	 		console.log(docs);
+		 		if(docs.length>0){
+		 			console.log("Science already exists in database");
+		 		}
 
+		 		else{
+		 			console.log("inserting the following data to databse:");
+					console.log(data_);
+					scienceDB.insert(data_,function(err,docs){
+					 	if(err) { throw err; }
+					 		res.send(docs);
+					 		console.log("science succcessfully inserted");
+				 	});
 
+		
+				};	
+	});
+}); //post end.
 
 //// TODO: Implement a POST method for harvester/drillers that changes the value
 /// of a harvested science [by x, and y] and changes it's stillExists condition to 'false'
 //
+// Update May 2nd, 4:48AM - Not done and not tested.
+
+app.post("/gather", function(req, res) {
+		//Method will check if it's there
+
+	var data_={};
+	data_.x=req.body.x;
+	data_.y=req.body.y;
+	data_.terrain=req.body.terrain;
+	data_.science=req.body.science;
+	data_.stillExists=req.body.stillExists;
+	console.log("recieving gather post request with data:\n"+req.body);
+	//first query if it's there.
+	scienceDB.findAndModify({
+		query: {"x":req.body.x,"y":req.body.y,"stillExists":true},
+		update: {stillExists:false}
+		},function(err,docs){
+	 		if(err) throw err;
+	 		console.log(docs);
+		 		if(docs.length>0){
+		 			console.log("about to change exists to false");
+		 			//good to update it here.
+		 		}
+
+		 		else{
+		 			console.log("bad request, either science not in database or already harvested");
+		
+				};	
+	});
+}); //post end.
+
+
+//TODO: Update methods for scanning squares with sciences to make sure they are still there
+//or to notify that they no longer exist if other team grabs them.
 
 
 //I'm still debating whether to have the server send back the coordinates in order or let the client do that.
