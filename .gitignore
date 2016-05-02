@@ -1,6 +1,0 @@
-#put your git ignores in here, make sure to comment
-
-#gradle related stuff
-.idea/
-.gradle/
-out/production/
