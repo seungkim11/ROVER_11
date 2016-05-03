@@ -22,7 +22,7 @@ var science=
         "terrain": "sand", // gravel, soild, rock,
         "science": "crystal",  //organic, radioactive, mineral
         "stillExists": true  //should be set to true when first seen by sensors
-    }
+    };
     
 //Ex 2:
 /* 
@@ -178,36 +178,36 @@ app.post("/scout", function(req, res) {
 //// TODO: Implement a POST method for harvester/drillers that changes the value
 /// of a harvested science [by x, and y] and changes it's stillExists condition to 'false'
 //
-// Update May 2nd, 4:48AM - Not done and not tested.
+// Update May 2nd, 10:13pm - it works but requires more testing.
+//possible response lag but the change is instant.
 
-// app.post("/gather", function(req, res) {
-// 		//Method will check if it's there
+//Todo: add a check to make sure users are harvesting with the science with the right tool.
+app.post("/gather", function(req, res) {
+		//Method will check if it's there
 
-// 	var data_={};
-// 	data_.x=req.body.x;
-// 	data_.y=req.body.y;
-// 	data_.terrain=req.body.terrain;
-// 	data_.science=req.body.science;
-// 	data_.stillExists=req.body.stillExists;
-// 	console.log("recieving gather post request with data:\n"+req.body);
-// 	//first query if it's there.
-// 	scienceDB.findAndModify({
-// 		query: {"x":req.body.x,"y":req.body.y,"stillExists":true},
-// 		update: {stillExists:false}
-// 		},function(err,docs){
-// 	 		if(err) throw err;
-// 	 		console.log(docs);
-// 		 		if(docs.length>0){
-// 		 			console.log("about to change exists to false");
-// 		 			//good to update it here.
-// 		 		}
+	var data_={};
+	data_.x=req.body.x;
+	data_.y=req.body.y;
 
-// 		 		else{
-// 		 			console.log("bad request, either science not in database or already harvested");
-		
-// 				};	
-// 	});
-// }); //post end.
+
+	console.log("recieving gather post request with data:\n"+req.body);
+	//first query if it's there.
+	scienceDB.findAndModify({
+		query: {"x":req.body.x,"y":req.body.y,"stillExists":true},
+		update: {$set: {"stillExists":false} },
+		},function(err,docs){
+	 		if(err) throw err;
+		 		if(docs){
+		 			console.log("about to change update the following document: ");
+		 			console.log(docs);
+		 			//might need a response to confirm.
+		 		}
+
+		 		else{
+		 			console.log("bad request, either science not in database or already harvested");
+				};	
+	});
+}); //post end.
 
 
 //TODO: Update methods for scanning squares with sciences to make sure they are still there
