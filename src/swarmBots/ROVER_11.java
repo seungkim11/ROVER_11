@@ -79,9 +79,6 @@ public class ROVER_11 {
         // int cnt=0;
         String line = "";
 
-        boolean goingSouth = false;
-        boolean stuck = false; // just means it did not change locations between requests,
-        // could be velocity limit or obstruction etc.
         boolean blocked = false;
 
         String[] cardinals = new String[4];
@@ -90,10 +87,9 @@ public class ROVER_11 {
         cardinals[2] = "S";
         cardinals[3] = "W";
 
-        String currentDir = cardinals[0];
+        // set current direction as initial I
+        String currentDir = "I";
         Coord currentLoc = null;
-        Coord previousLoc = null;
-
 
         Coord rovergroupStartPosition = null;
         Coord targetLocation = null;
@@ -131,65 +127,20 @@ public class ROVER_11 {
         Queue<Coord> destinations = new LinkedList<>();
         Queue<Coord> blockedDestinations = new LinkedList<>();
 
+        // first head to target loc
 
-        destinations.add(new Coord(5, 15));
-        destinations.add(new Coord(7, 16));
-        destinations.add(new Coord(8, 17));
-        destinations.add(new Coord(10, 17));
-        destinations.add(new Coord(7, 19));
-        destinations.add(new Coord(7, 20));
-        destinations.add(new Coord(13, 18));
-        destinations.add(new Coord(13, 23));
-        destinations.add(new Coord(14, 15));
-        destinations.add(new Coord(16, 11));
-        destinations.add(new Coord(17, 12));
-        destinations.add(new Coord(19, 15));
-        destinations.add(new Coord(19, 18));
-        destinations.add(new Coord(20, 17));
-        destinations.add(new Coord(21, 16));
-        destinations.add(new Coord(22, 18));
-        destinations.add(new Coord(20, 4));
-        destinations.add(new Coord(23, 5));
-        destinations.add(new Coord(25, 4));
-        destinations.add(new Coord(28, 6)); //sand
-        destinations.add(new Coord(27, 8));
-        destinations.add(new Coord(29, 9));
-        destinations.add(new Coord(29, 10));
-        destinations.add(new Coord(31, 6));
-        destinations.add(new Coord(38, 17));
-        destinations.add(new Coord(39, 18));
-        destinations.add(new Coord(40, 18));
-        destinations.add(new Coord(30, 21));
-        destinations.add(new Coord(30, 26));
-        destinations.add(new Coord(29, 29));
-        destinations.add(new Coord(32, 34));
-        destinations.add(new Coord(26, 37));
-        destinations.add(new Coord(30, 43));
-        destinations.add(new Coord(31, 44));
-        destinations.add(new Coord(32, 43));
-        destinations.add(new Coord(39, 42));
-        destinations.add(new Coord(41, 43));
-        destinations.add(new Coord(43, 42));
-        destinations.add(new Coord(44, 43));
-        destinations.add(new Coord(45, 43));
-        destinations.add(new Coord(45, 44));
-        destinations.add(new Coord(45, 45));
-        destinations.add(new Coord(46, 45));
-        destinations.add(new Coord(45, 46));
-        destinations.add(new Coord(44, 47));
-        destinations.add(new Coord(42, 47));
-        destinations.add(new Coord(42, 46));
-        destinations.add(new Coord(43, 46));
-        destinations.add(new Coord(42, 45));
-        destinations.add(new Coord(43, 44));
-        destinations.add(new Coord(40, 44));
-        destinations.add(new Coord(39, 45));
-        destinations.add(new Coord(39, 46));
-        destinations.add(new Coord(40, 46));
-
-        destinations.add(rovergroupStartPosition);
-
+        destinations.add(new Coord(27, 7));
+        destinations.add(new Coord(13,23));
+        destinations.add(targetLocation);
         Coord destination = destinations.poll();
+
+        //initial movement - need to scan and search path
+        // ***** do a SCAN *****
+
+        // upon scan, update my field map
+        MapTile[][] scanMapTiles = null;
+
+        Stack<String> moves = new Stack<>();
 
         // start Rover controller process
         while (true) {
@@ -211,9 +162,6 @@ public class ROVER_11 {
             }
             System.out.println(rovername + " currentLoc at start: " + currentLoc);
 
-            // after getting location set previous equal current to be able to check for stuckness and blocked later
-            previousLoc = currentLoc;
-
 
             // **** get equipment listing ****
             ArrayList<String> equipment = new ArrayList<String>();
@@ -228,70 +176,77 @@ public class ROVER_11 {
             scanMap.debugPrintMap();
 
             // upon scan, update my field map
-            MapTile[][] scanMapTiles = scanMap.getScanMap();
+            scanMapTiles = scanMap.getScanMap();
             updateFieldMap(currentLoc, scanMapTiles);
 
 
             // ***** MOVING *****
 
             // our starting position is xpos=1, ypos=5
-            // direction Queue for direction
-            List<String> moves = Astar(currentLoc, destination, scanMapTiles);
 
             System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
             System.out.println(rovername + " moves: " + moves.toString());
 
-            // if moving
-            if (!moves.isEmpty()) {
-                out.println("MOVE " + moves.get(0));
+            // if path is blocked redo the path search
+            if (currentDir.equals("I") || moves.size() == 0 || checkBlocked(currentDir, scanMapTiles)){
+                System.out.println("blocked or no moves");
+                moves = Astar(currentLoc, destination, scanMapTiles);
+            }
+
+            // if there is  move
+            if (moves.size() != 0){
 
                 // if rover is next to the target
                 // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
                 if (getDistance(currentLoc, destination) < 101){
-                    System.out.println("Can reach Target. Going ");
 
                     // if destination is walkable
                     if (validateTile(fieldMap.get(destination))){
                         System.out.println("Target Reachable");
+
                     }else{
                         // Target is not walkable (hasRover, or sand)
-                        // then go to next destination, push current destination to end
-                        // TODO: handle the case when the destiation is blocked permanently
-                        // TODO: also, what if the destination is already taken? update fieldmap and dont go there
-
+                        // then go to next destination
                         // blocked destination is added to blockedDestianions queue
                         blockedDestinations.add(destination);
 
                         // move to new destination
                         destination = destinations.poll();
+
+                        moves = Astar(currentLoc, destination, scanMapTiles);
+                        currentDir = moves.pop();
                         System.out.println("Target blocked. Switch target to: " + destination);
                     }
 
-                }
-
-
-
-            } else {
-                // check if rover is at the destination, drill
-                if (currentLoc.equals(destination)) {
-                    out.println("GATHER");
-                    System.out.println(rovername + " arrived destination. Now gathering.");
-                    if (!destinations.isEmpty()) {
-                        destination = destinations.poll();
-                        System.out.println(rovername + " going to next destination at: " + destination);
-                    } else {
-                        System.out.println("Nowhere else to go. Relax..");
-                    }
-
                 } else {
+                    // check if rover is at the destination, drill
+                    if (currentLoc.equals(destination)) {
+                        out.println("GATHER");
+                        System.out.println(rovername + " arrived destination. Now gathering.");
+                        if (!destinations.isEmpty()) {
+                            destination = destinations.poll();
+                            moves = Astar(currentLoc, destination, scanMapTiles);
+                            currentDir = moves.pop();
+                            System.out.println(rovername + " going to next destination at: " + destination);
+                        } else {
+                            System.out.println("Nowhere else to go. Relax..");
+                        }
 
-                      // TODO: path blocked.
-//                    String move = cardinals[(int) (Math.random() * 4)];
-//                    System.out.println("MOVE " + move);
-//                    out.println("MOVE " + move);
+                    } else {
+                        destination = rovergroupStartPosition;
+                    }
                 }
+
+
             }
 
+            currentDir = moves.pop();
+            // direction Queue for direction
+
+
+
+            out.println("MOVE " + currentDir);
+            currentDir = "";
 
             // another call for current location
             out.println("LOC");
@@ -306,20 +261,8 @@ public class ROVER_11 {
                 currentLoc = extractLocationFromString(line);
             }
 
-            //System.out.println("ROVER_11 currentLoc after recheck: " + currentLoc);
-            //System.out.println("ROVER_11 previousLoc: " + previousLoc);
-
-            // test for stuckness
-            stuck = currentLoc.equals(previousLoc);
-//            if (stuck){
-//                destination = destinations.poll();
-//            }
-            //System.out.println("ROVER_11 stuck test " + stuck);
-            //System.out.println(rovername + " blocked test " + blocked);
 
             // TODO - logic to calculate where to move next
-
-
             Thread.sleep(sleepTime);
 
             System.out.println(rovername + " ------------ bottom process control --------------");
@@ -328,9 +271,8 @@ public class ROVER_11 {
     }
 
 
-
     // ******* Search Methods
-    public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
+    private Stack<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
         PriorityQueue<Node> open = new PriorityQueue<>();
         Set<Node> closed = new HashSet<>();
 
@@ -390,12 +332,11 @@ public class ROVER_11 {
 
         }
 
-
-        List<String> moves = getTrace(destNode, parentMemory);
+        Stack<String> moves = getTrace(destNode, parentMemory);
         return moves;
     }
 
-    private List<String> getTrace(Node dest, Map<Node, Node> parents) {
+    private Stack<String> getTrace(Node dest, Map<Node, Node> parents) {
         Node backTrack = dest;
         double mindist = Double.MAX_VALUE;
         for (Node n : parents.keySet()) {
@@ -413,7 +354,7 @@ public class ROVER_11 {
         }
 
 
-        List<String> moves = new ArrayList<>();
+        Stack<String> moves = new Stack<>();
 
         while (backTrack != null) {
             Node parent = parents.get(backTrack);
@@ -424,16 +365,16 @@ public class ROVER_11 {
                 int currentY = backTrack.getCoord().ypos;
                 if (currentX == parentX) {
                     if (parentY < currentY) {
-                        moves.add(0, "S");
+                        moves.push("S");
                     } else {
-                        moves.add(0, "N");
+                        moves.push("N");
                     }
 
                 } else {
                     if (parentX < currentX) {
-                        moves.add(0, "E");
+                        moves.push("E");
                     } else {
-                        moves.add(0, "W");
+                        moves.push("W");
                     }
                 }
             }
@@ -506,8 +447,6 @@ public class ROVER_11 {
         return mapTile.getScience() == Science.NONE;
     }
 
-
-
     public boolean validateTile(MapTile maptile) {
 //        System.out.println("hasrover: " + maptile.getHasRover() + ", terrain: " + maptile.getTerrain());
         Terrain terrain = maptile.getTerrain();
@@ -519,6 +458,19 @@ public class ROVER_11 {
         return true;
     }
 
+    private boolean checkBlocked(String currentDir, MapTile[][] mapTiles) {
+        int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
+        if (currentDir.equals("W")){
+            if (!validateTile(mapTiles[centerIndex-1][centerIndex])) return true;
+        }else if (currentDir.equals("E")){
+            if (!validateTile(mapTiles[centerIndex+1][centerIndex])) return true;
+        }else if (currentDir.equals("N")){
+            if (!validateTile(mapTiles[centerIndex][centerIndex+1])) return true;
+        }else if (currentDir.equals("S")){
+            if (!validateTile(mapTiles[centerIndex+1][centerIndex-1])) return true;
+        }
+        return false;
+    }
 
     public double getDistance(Coord current, Coord dest) {
         double dx = current.xpos - dest.xpos;
