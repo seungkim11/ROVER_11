@@ -189,7 +189,6 @@ app.post("/gather", function(req, res) {
 	data_.x=req.body.x;
 	data_.y=req.body.y;
 
-
 	console.log("recieving gather post request with data:\n"+req.body);
 	//first query if it's there.
 	scienceDB.findAndModify({
@@ -209,6 +208,11 @@ app.post("/gather", function(req, res) {
 	});
 }); //post end.
 
+// app.post("/testPost", function(req, res) {
+// 	console.log("The post sent here was:\n");
+// 	console.log(req.body)
+	
+// });
 
 //TODO: Update methods for scanning squares with sciences to make sure they are still there
 //or to notify that they no longer exist if other team grabs them.
