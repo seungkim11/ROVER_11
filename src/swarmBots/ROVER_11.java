@@ -7,15 +7,21 @@ import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 
+import org.json.simple.JSONObject;
+
 import enums.Science;
 import enums.Terrain;
 import javafx.scene.layout.Priority;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -31,6 +37,8 @@ public class ROVER_11 {
     String SERVER_ADDRESS = "localhost";
     static final int PORT_ADDRESS = 9537;
     Map<Coord, MapTile> fieldMap;
+    int xx,yy;
+
 
     public ROVER_11() {
         // constructor
@@ -196,6 +204,9 @@ public class ROVER_11 {
 
         Coord destination = destinations.poll();
 
+
+
+
         // start Rover controller process
         while (true) {
 
@@ -245,6 +256,21 @@ public class ROVER_11 {
 
             System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
             System.out.println(rovername + " moves: " + moves.toString());
+
+
+//            String response = request(scanMapTiles);
+            String response = null;
+            try {
+                System.out.println("sending post request");
+                response = post(scanMapTiles);
+                System.out.println("got response");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+            System.out.println(response);
+
 
             // if moving
             if (!moves.isEmpty()) {
@@ -399,6 +425,109 @@ public class ROVER_11 {
         List<String> moves = getTrace(destNode, parentMemory);
         return moves;
     }
+
+
+    private String request(MapTile[][] scanMapTile){
+
+        String USER_AGENT = "ROVER_11";
+        String url = "http://192.168.0.101:3000/globalMap";
+
+        URL obj = null;
+
+        String responseStr ="";
+        try {
+            obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            con.setRequestMethod("GET");
+
+            //add request header
+            con.setRequestProperty("User-Agent", USER_AGENT);
+
+            int responseCode = con.getResponseCode();
+            System.out.println("\nSending 'GET' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            //print result
+            responseStr = response.toString();
+
+
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        // optional default is GET
+
+
+        return responseStr;
+    }
+
+    private String post(MapTile[][] scanMapTiles) throws Exception {
+
+        JSONObject jsonObj = new JSONObject();
+        jsonObj.put("x", 300+xx++);
+        jsonObj.put("y", 300+yy++);
+        jsonObj.put("terrain", "sand");
+        jsonObj.put("science", "chemical");
+        jsonObj.put("stillExists", true);
+
+
+        String charset = "UTF-8";
+        String url = "http://192.168.0.101:3000/scout";
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+        String USER_AGENT = "ROVER_11";
+
+        //add reuqest header
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Accept", "application/json");
+        con.setRequestProperty("Content-Type", "application/json");
+
+
+        byte[] jsonBytes = jsonObj.toString().getBytes("UTF-8");
+
+
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.write(jsonBytes);
+        wr.flush();
+        wr.close();
+
+        int responseCode = con.getResponseCode();
+        System.out.println("\nSending 'POST' request to URL : " + url);
+        System.out.println("Response Code : " + responseCode);
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        return response.toString();
+
+
+    }
+
+
 
     private List<String> getTrace(Node dest, Map<Node, Node> parents) {
         Node backTrack = dest;
