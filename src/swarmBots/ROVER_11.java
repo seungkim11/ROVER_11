@@ -140,14 +140,12 @@ public class ROVER_11 {
         Queue<Coord> blockedDestinations = new LinkedList<>();
 
 
+        destinations.add(new Coord(40, 10));
         destinations.add(targetLocation);
         //TODO: implement sweep target location
         destinations.add(rovergroupStartPosition);
 
         Coord destination = destinations.poll();
-
-
-
 
         // start Rover controller process
         while (true) {
@@ -203,17 +201,15 @@ public class ROVER_11 {
 
             // ***** communication with server *****
 //            String response = request(scanMapTiles);
-            String response = null;
-            try {
-                System.out.println("sending post request");
-                response = post(scanMapTiles);
-                System.out.println("got response");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-            System.out.println(response);
+//            String response = null;
+//            try {
+//                System.out.println("sending post request");
+//                response = post(scanMapTiles);
+//                System.out.println("got response");
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            System.out.println(response);
 
 
             // if moving
