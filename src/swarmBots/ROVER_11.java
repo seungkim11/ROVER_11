@@ -140,66 +140,8 @@ public class ROVER_11 {
         Queue<Coord> blockedDestinations = new LinkedList<>();
 
 
-        destinations.add(new Coord(4, 19));
-        destinations.add(new Coord(8, 28));
-        destinations.add(new Coord(19, 39));
-        destinations.add(new Coord(33, 49));
-        destinations.add(new Coord(38, 51));
-        destinations.add(new Coord(43, 55));
-        destinations.add(new Coord(52, 55));
-        destinations.add(new Coord(58, 55));
-        destinations.add(new Coord(73, 56));
-        destinations.add(new Coord(76, 56));
-        destinations.add(new Coord(76, 54));
-        destinations.add(new Coord(76, 53));
-        destinations.add(new Coord(76, 52));
-        destinations.add(new Coord(76, 51));
-        destinations.add(new Coord(76, 50));
-        destinations.add(new Coord(77, 50));
-        destinations.add(new Coord(77, 51));
-        destinations.add(new Coord(77, 52));
-        destinations.add(new Coord(77, 54));
-        destinations.add(new Coord(77, 55));
-        destinations.add(new Coord(77, 56));
-        destinations.add(new Coord(78, 56));
-        destinations.add(new Coord(78, 55));
-        destinations.add(new Coord(78, 54));
-        destinations.add(new Coord(78, 53));
-        destinations.add(new Coord(78, 52));
-        destinations.add(new Coord(78, 51));
-        destinations.add(new Coord(78, 50));
-        destinations.add(new Coord(79, 50));
-        destinations.add(new Coord(79, 51));
-        destinations.add(new Coord(79, 52));
-        destinations.add(new Coord(79, 53));
-        destinations.add(new Coord(79, 54));
-        destinations.add(new Coord(80, 54));
-        destinations.add(new Coord(80, 53));
-        destinations.add(new Coord(80, 52));
-        destinations.add(new Coord(80, 51));
-        destinations.add(new Coord(81, 51));
-        destinations.add(new Coord(81, 52));
-        destinations.add(new Coord(81, 53));
-        destinations.add(new Coord(82, 52));
-        destinations.add(new Coord(82, 51));
-        destinations.add(new Coord(82, 50));
-        destinations.add(new Coord(83, 38));
-        destinations.add(new Coord(80, 22));
-        destinations.add(new Coord(82, 21));
-        destinations.add(new Coord(79, 20));
-        destinations.add(new Coord(80, 18));
-        destinations.add(new Coord(78, 16));
-        destinations.add(new Coord(77, 13));
-        destinations.add(new Coord(73, 17));
-        destinations.add(new Coord(60, 22));
-        destinations.add(new Coord(43, 21));
-        destinations.add(new Coord(38, 21));
-        destinations.add(new Coord(32, 19));
-        destinations.add(new Coord(28, 22));
-        destinations.add(new Coord(29, 28));
-        destinations.add(new Coord(25, 32));
-        destinations.add(new Coord(8, 28));
-
+        destinations.add(targetLocation);
+        //TODO: implement sweep target location
         destinations.add(rovergroupStartPosition);
 
         Coord destination = destinations.poll();
@@ -258,6 +200,8 @@ public class ROVER_11 {
             System.out.println(rovername + " moves: " + moves.toString());
 
 
+
+            // ***** communication with server *****
 //            String response = request(scanMapTiles);
             String response = null;
             try {
