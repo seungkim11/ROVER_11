@@ -1,12 +1,5 @@
 package swarmBots;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.ArrayList;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -16,6 +9,13 @@ import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+
 import enums.Terrain;
 
 /**
@@ -24,7 +24,7 @@ import enums.Terrain;
  * publishing their code examples
  */
 
-public class ROVER_00 {
+public class ROVER_00_Comm {
 
 	BufferedReader in;
 	PrintWriter out;
@@ -34,7 +34,7 @@ public class ROVER_00 {
 	String SERVER_ADDRESS = "localhost";
 	static final int PORT_ADDRESS = 9537;
 
-	public ROVER_00() {
+	public ROVER_00_Comm() {
 		// constructor
 		System.out.println("ROVER_00 rover object constructed");
 		rovername = "ROVER_00";
@@ -42,8 +42,8 @@ public class ROVER_00 {
 		// this should be a safe but slow timer value
 		sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
-	
-	public ROVER_00(String serverAddress) {
+
+	public ROVER_00_Comm(String serverAddress) {
 		// constructor
 		System.out.println("ROVER_00 rover object constructed");
 		rovername = "ROVER_00";
@@ -118,6 +118,11 @@ public class ROVER_00 {
 			}
 			System.out.println(rovername + " TARGET_LOC " + targetLocation);
 			
+			// ******** communication server
+			String url = "http://localhost:3000/api/global";
+			Communication com = new Communication(url);
+	
+	
 			boolean goingSouth = false;
 			boolean stuck = false; // just means it did not change locations between requests,
 									// could be velocity limit or obstruction etc.
@@ -157,7 +162,9 @@ public class ROVER_00 {
 				// after getting location set previous equal current to be able to check for stuckness and blocked later
 				previousLoc = currentLoc;		
 				
+				
 
+				
 		
 	
 				// ***** do a SCAN *****
@@ -202,6 +209,13 @@ public class ROVER_00 {
 					MapTile[][] scanMapTiles = scanMap.getScanMap();
 					int centerIndex = (scanMap.getEdgeSize() - 1)/2;
 					// tile S = y + 1; N = y - 1; E = x + 1; W = x - 1
+
+
+
+					// ********* post your scanMapTiles to communication server
+					// must be called AFTER doScan() and currentLoc
+					com.postScanMapTiles(currentLoc, scanMapTiles);
+
 
 
 					if (goingSouth) {
@@ -394,14 +408,14 @@ public class ROVER_00 {
 	 * Runs the client
 	 */
 	public static void main(String[] args) throws Exception {
-		ROVER_00 client;
+		ROVER_00_Comm client;
     	// if a command line argument is included it is used as the map filename
 		// if present uses an IP address instead of localhost 
 		
 		if(!(args.length == 0)){
-			client = new ROVER_00(args[0]);
+			client = new ROVER_00_Comm(args[0]);
 		} else {
-			client = new ROVER_00();
+			client = new ROVER_00_Comm();
 		}
 		
 		client.run();
