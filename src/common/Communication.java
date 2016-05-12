@@ -1,8 +1,5 @@
 package common;
 
-import common.Coord;
-import common.MapTile;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,8 +35,6 @@ public class Communication {
         try {
             obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-            String USER_AGENT = "ROVER_11";
 
             //add reuqest header
             con.setDoOutput(true);

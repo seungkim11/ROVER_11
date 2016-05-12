@@ -10,9 +10,11 @@ import common.MapTile;
 import common.ScanMap;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import enums.Science;
 import enums.Terrain;
+import supportTools.CommunicationHelper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,8 +35,9 @@ public class ROVER_11 {
     int sleepTime;
     String SERVER_ADDRESS = "localhost";
     static final int PORT_ADDRESS = 9537;
-    Map<Coord, MapTile> fieldMap;
-    int xx,yy;
+    Map<Coord, MapTile> globalMap;
+    Queue<Coord> destinations;
+    long trafficCounter;
 
 
     public ROVER_11() {
@@ -44,7 +47,8 @@ public class ROVER_11 {
         SERVER_ADDRESS = "localhost";
         // this should be a safe but slow timer value
         sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
-        fieldMap = new HashMap<>();
+        globalMap = new HashMap<>();
+        destinations = new LinkedList<>();
     }
 
     public ROVER_11(String serverAddress) {
@@ -52,7 +56,9 @@ public class ROVER_11 {
         System.out.println(rovername + " rover object constructed");
         rovername = "ROVER_11";
         SERVER_ADDRESS = serverAddress;
-        sleepTime = 200; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
+        sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
+        globalMap = new HashMap<>();
+        destinations = new LinkedList<>();
     }
 
     /**
@@ -134,16 +140,13 @@ public class ROVER_11 {
 
 
         // define Communication
-        String url = "https://localhost:3000/api/global";
+        // String url = "https://localhost:3000/api/global";
+        String url = "http://23.251.155.186:3000/api/global";
         Communication com = new Communication(url);
 
-
         // Get destinations from Sensor group. I am a driller!
-        Queue<Coord> destinations = new LinkedList<>();
         Queue<Coord> blockedDestinations = new LinkedList<>();
 
-
-        destinations.add(new Coord(40, 10));
         destinations.add(targetLocation);
         //TODO: implement sweep target location
         destinations.add(rovergroupStartPosition);
@@ -188,21 +191,25 @@ public class ROVER_11 {
 
             // upon scan, update my field map
             MapTile[][] scanMapTiles = scanMap.getScanMap();
-            updateFieldMap(currentLoc, scanMapTiles);
+            updateglobalMap(currentLoc, scanMapTiles);
 
 
-            // ***** MOVING *****
+            // ********** MOVING **********
 
-            // our starting position is xpos=1, ypos=5
             // direction Queue for direction
             List<String> moves = Astar(currentLoc, destination, scanMapTiles);
 
             System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
             System.out.println(rovername + " moves: " + moves.toString());
 
+
             // ***** communicating with the server
             com.postScanMapTiles(currentLoc, scanMapTiles);
-            JSONArray array = com.getGlobalMap();
+            if (trafficCounter % 10 == 0){
+                updateglobalMap(com.getGlobalMap());
+                System.out.println(destinations);
+            }
+            trafficCounter++;
 
 
             // if moving
@@ -215,13 +222,13 @@ public class ROVER_11 {
                     System.out.println("Can reach Target. Going ");
 
                     // if destination is walkable
-                    if (validateTile(fieldMap.get(destination))){
+                    if (validateTile(globalMap.get(destination))){
                         System.out.println("Target Reachable");
                     }else{
                         // Target is not walkable (hasRover, or sand)
                         // then go to next destination, push current destination to end
                         // TODO: handle the case when the destiation is blocked permanently
-                        // TODO: also, what if the destination is already taken? update fieldmap and dont go there
+                        // TODO: also, what if the destination is already taken? update globalMap and dont go there
 
                         // blocked destination is added to blockedDestianions queue
                         blockedDestinations.add(destination);
@@ -265,8 +272,6 @@ public class ROVER_11 {
                 line = "";
             }
             if (line.startsWith("LOC")) {
-
-
                 currentLoc = extractLocationFromString(line);
             }
 
@@ -288,59 +293,7 @@ public class ROVER_11 {
 
             System.out.println(rovername + " ------------ bottom process control --------------");
         }
-
     }
-
-//    // *** http requests ***
-//
-//    private String request(MapTile[][] scanMapTile){
-//
-//
-//        String url = "http://192.168.0.101:3000/globalMap";
-//
-//        URL obj = null;
-//
-//        String responseStr ="";
-//        try {
-//            obj = new URL(url);
-//            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-//
-//            con.setRequestMethod("GET");
-//
-//            int responseCode = con.getResponseCode();
-//            System.out.println("\nSending 'GET' request to URL : " + url);
-//            System.out.println("Response Code : " + responseCode);
-//
-//            BufferedReader in = new BufferedReader(
-//                    new InputStreamReader(con.getInputStream()));
-//            String inputLine;
-//            StringBuffer response = new StringBuffer();
-//
-//            while ((inputLine = in.readLine()) != null) {
-//                response.append(inputLine);
-//            }
-//            in.close();
-//
-//            //print result
-//            responseStr = response.toString();
-//
-//
-//
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//
-//        // optional default is GET
-//
-//
-//        return responseStr;
-//    }
-
-
-
 
     // ******* Search Methods
     public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
@@ -369,7 +322,7 @@ public class ROVER_11 {
 
             for (Coord c : getAdjacentCoordinates(u.getCoord(), scanMapTiles, current)) {
                 // if this node hasn't already been checked
-                if (!closed.contains(new Node(c, 0)) && fieldMap.get(c) != null && validateTile(fieldMap.get(c))) {
+                if (!closed.contains(new Node(c, 0)) && globalMap.get(c) != null && validateTile(globalMap.get(c))) {
 
                     // TODO: MAYBE: assess cost depending on the tile's terrain, science, etc
                     double g = u.getData() + 1; // each move cost is 1, for now
@@ -402,7 +355,6 @@ public class ROVER_11 {
             }
 
         }
-
 
         List<String> moves = getTrace(destNode, parentMemory);
         return moves;
@@ -478,9 +430,8 @@ public class ROVER_11 {
         return list;
     }
 
-    private void updateFieldMap(Coord currentLoc, MapTile[][] scanMapTiles) {
+    private void updateglobalMap(Coord currentLoc, MapTile[][] scanMapTiles) {
         int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
-
 
         for (int row = 0; row < scanMapTiles.length; row++) {
             for (int col = 0; col < scanMapTiles[row].length; col++) {
@@ -490,14 +441,39 @@ public class ROVER_11 {
                 int xp = currentLoc.xpos - centerIndex + col;
                 int yp = currentLoc.ypos - centerIndex + row;
                 Coord coord = new Coord(xp, yp);
-                fieldMap.put(coord, mapTile);
+                globalMap.put(coord, mapTile);
             }
         }
         // put my current position so it is walkable
         MapTile currentMapTile = scanMapTiles[centerIndex][centerIndex].getCopyOfMapTile();
         currentMapTile.setHasRoverFalse();
-        fieldMap.put(currentLoc, currentMapTile);
+        globalMap.put(currentLoc, currentMapTile);
     }
+
+    // get data from server and update field map
+    private void updateglobalMap(JSONArray data) {
+
+        for (Object o: data){
+
+            JSONObject jsonObj = (JSONObject) o;
+            int x = (int) (long) jsonObj.get("x");
+            int y = (int) (long) jsonObj.get("y");
+            Coord coord = new Coord(x, y);
+
+            // only bother to save if our globalMap doesn't contain the coordinate
+            if (!globalMap.containsKey(coord)){
+                MapTile tile = CommunicationHelper.convertToMapTile(jsonObj);
+
+                if (tile.getScience() != Science.NONE){
+                    if (!destinations.contains(coord))
+                        destinations.add(coord);
+                }
+
+                globalMap.put(coord, tile);
+            }
+        }
+    }
+
 
     public int updateScanMapIndex(int currentLoc, int traceLoc, int edgeSize) {
         return ((edgeSize - 1) / 2) + (currentLoc - traceLoc);
@@ -519,7 +495,6 @@ public class ROVER_11 {
     }
 
 
-
     public boolean validateTile(MapTile maptile) {
 //        System.out.println("hasrover: " + maptile.getHasRover() + ", terrain: " + maptile.getTerrain());
         Terrain terrain = maptile.getTerrain();
@@ -530,7 +505,6 @@ public class ROVER_11 {
         }
         return true;
     }
-
 
     public double getDistance(Coord current, Coord dest) {
         double dx = current.xpos - dest.xpos;

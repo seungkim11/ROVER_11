@@ -9,6 +9,8 @@ import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 
+import org.json.simple.JSONArray;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -119,8 +121,9 @@ public class ROVER_00_Comm {
 			System.out.println(rovername + " TARGET_LOC " + targetLocation);
 			
 			// ******** communication server
-			String url = "http://localhost:3000/api/global";
+			String url = "http://23.251.155.186:3000/api/global";
 			Communication com = new Communication(url);
+			int comm_count = 0;
 	
 	
 			boolean goingSouth = false;
@@ -212,9 +215,25 @@ public class ROVER_00_Comm {
 
 
 
+
+
+
+
 					// ********* post your scanMapTiles to communication server
 					// must be called AFTER doScan() and currentLoc
 					com.postScanMapTiles(currentLoc, scanMapTiles);
+
+					// reduce the number of calling globalmap for optimal traffic
+					if (comm_count % 20 == 0){
+						JSONArray array = com.getGlobalMap();
+						// do something with this global map data
+					}
+					comm_count++;
+
+
+
+
+
 
 
 
