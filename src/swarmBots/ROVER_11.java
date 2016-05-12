@@ -14,6 +14,8 @@ import org.json.simple.JSONObject;
 
 import enums.Science;
 import enums.Terrain;
+import rover_logic.Node;
+import rover_logic.SearchLogic;
 import supportTools.CommunicationHelper;
 
 import java.io.BufferedReader;
@@ -35,8 +37,8 @@ public class ROVER_11 {
     int sleepTime;
     String SERVER_ADDRESS = "localhost";
     static final int PORT_ADDRESS = 9537;
-    Map<Coord, MapTile> globalMap;
-    Queue<Coord> destinations;
+    public static Map<Coord, MapTile> globalMap;
+    List<Coord> destinations;
     long trafficCounter;
 
 
@@ -48,7 +50,7 @@ public class ROVER_11 {
         // this should be a safe but slow timer value
         sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
         globalMap = new HashMap<>();
-        destinations = new LinkedList<>();
+        destinations = new ArrayList<>();
     }
 
     public ROVER_11(String serverAddress) {
@@ -58,7 +60,7 @@ public class ROVER_11 {
         SERVER_ADDRESS = serverAddress;
         sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
         globalMap = new HashMap<>();
-        destinations = new LinkedList<>();
+        destinations = new ArrayList<>();
     }
 
     /**
@@ -138,6 +140,7 @@ public class ROVER_11 {
         // ******* destination *******
         // TODO: Sort destination depending on current Location
 
+        SearchLogic search = new SearchLogic();
 
         // define Communication
         // String url = "https://localhost:3000/api/global";
@@ -145,13 +148,12 @@ public class ROVER_11 {
         Communication com = new Communication(url);
 
         // Get destinations from Sensor group. I am a driller!
-        Queue<Coord> blockedDestinations = new LinkedList<>();
+        List<Coord> blockedDestinations = new ArrayList<>();
 
         destinations.add(targetLocation);
         //TODO: implement sweep target location
-        destinations.add(rovergroupStartPosition);
 
-        Coord destination = destinations.poll();
+        Coord destination = getClosestDestination(rovergroupStartPosition);
 
         // start Rover controller process
         while (true) {
@@ -197,7 +199,7 @@ public class ROVER_11 {
             // ********** MOVING **********
 
             // direction Queue for direction
-            List<String> moves = Astar(currentLoc, destination, scanMapTiles);
+            List<String> moves = search.Astar(currentLoc, destination, scanMapTiles);
 
             System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
             System.out.println(rovername + " moves: " + moves.toString());
@@ -207,7 +209,12 @@ public class ROVER_11 {
             com.postScanMapTiles(currentLoc, scanMapTiles);
             if (trafficCounter % 10 == 0){
                 updateglobalMap(com.getGlobalMap());
-                System.out.println(destinations);
+
+                // ********* get closest destination from current location everytime
+                if (!destinations.isEmpty()){
+                    destination = getClosestDestination(currentLoc);
+                }
+
             }
             trafficCounter++;
 
@@ -218,11 +225,11 @@ public class ROVER_11 {
 
                 // if rover is next to the target
                 // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
-                if (getDistance(currentLoc, destination) < 101){
+                if (search.getDistance(currentLoc, destination) < 101){
                     System.out.println("Can reach Target. Going ");
 
                     // if destination is walkable
-                    if (validateTile(globalMap.get(destination))){
+                    if (search.validateTile(globalMap.get(destination))){
                         System.out.println("Target Reachable");
                     }else{
                         // Target is not walkable (hasRover, or sand)
@@ -234,7 +241,7 @@ public class ROVER_11 {
                         blockedDestinations.add(destination);
 
                         // move to new destination
-                        destination = destinations.poll();
+                        destination = getClosestDestination(currentLoc);
                         System.out.println("Target blocked. Switch target to: " + destination);
                     }
 
@@ -248,7 +255,9 @@ public class ROVER_11 {
                     out.println("GATHER");
                     System.out.println(rovername + " arrived destination. Now gathering.");
                     if (!destinations.isEmpty()) {
-                        destination = destinations.poll();
+                        //remove from destinations
+                        destinations.remove(destination);
+                        destination = getClosestDestination(currentLoc);
                         System.out.println(rovername + " going to next destination at: " + destination);
                     } else {
                         System.out.println("Nowhere else to go. Relax..");
@@ -295,140 +304,20 @@ public class ROVER_11 {
         }
     }
 
-    // ******* Search Methods
-    public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
-        PriorityQueue<Node> open = new PriorityQueue<>();
-        Set<Node> closed = new HashSet<>();
+    private Coord getClosestDestination(Coord currentLoc) {
+        double max = Double.MAX_VALUE;
+        Coord target = null;
 
-        // for back tracing
-        Map<Node, Double> distanceMemory = new HashMap<>();
-        Map<Node, Node> parentMemory = new LinkedHashMap<>();
-
-        open.add(new Node(current, 0));
-        Node destNode = new Node(dest, 0);
-
-        // while there is a node to check in open list
-        Node u = null;
-        while (!open.isEmpty()) {
-
-            u = open.poll(); // poll the closest one
-            closed.add(u); // put it in closed list, to not check anymore
-
-            // if u is destination, break;
-            if (u.getCoord().equals(dest)) {
-                destNode = u;
-                break;
-            }
-
-            for (Coord c : getAdjacentCoordinates(u.getCoord(), scanMapTiles, current)) {
-                // if this node hasn't already been checked
-                if (!closed.contains(new Node(c, 0)) && globalMap.get(c) != null && validateTile(globalMap.get(c))) {
-
-                    // TODO: MAYBE: assess cost depending on the tile's terrain, science, etc
-                    double g = u.getData() + 1; // each move cost is 1, for now
-                    double h = getDistance(c, dest); // distance from neighbor to destination
-                    double f = h + g; // total heuristic of this neighbor c
-                    Node n = new Node(c, f);
-
-                    // for back tracing, store in hashmap
-                    if (distanceMemory.containsKey(n)) {
-
-                        // if distance of this neighboring node is less than memory, update
-                        // else, leave as it is
-                        if (distanceMemory.get(n) > f) {
-                            distanceMemory.put(n, f);
-                            open.remove(n);  // also update from open list
-                            open.add(n);
-                            parentMemory.put(n, u); // add in parent
-                        }
-
-
-                    } else {
-                        // if this neighbor node is new, then add to memory
-                        distanceMemory.put(n, f);
-                        parentMemory.put(n, u);
-                        open.add(n);
-                    }
-
-                }
-
-            }
-
-        }
-
-        List<String> moves = getTrace(destNode, parentMemory);
-        return moves;
-    }
-
-    private List<String> getTrace(Node dest, Map<Node, Node> parents) {
-        Node backTrack = dest;
-        double mindist = Double.MAX_VALUE;
-        for (Node n : parents.keySet()) {
-            if (n.equals(dest)) {
-                backTrack = dest;
-                break;
-            } else {
-                double distance = getDistance(dest.getCoord(), n.getCoord());
-                if (distance < mindist) {
-                    mindist = distance;
-                    backTrack = n;
-                }
-
+        for (Coord desitnation: destinations){
+            double distance = SearchLogic.getDistance(currentLoc, desitnation);
+            if (distance < max){
+                max = distance;
+                target = desitnation;
             }
         }
-
-        List<String> moves = new ArrayList<>();
-
-        while (backTrack != null) {
-            Node parent = parents.get(backTrack);
-            if (parent != null) {
-                int parentX = parent.getCoord().xpos;
-                int parentY = parent.getCoord().ypos;
-                int currentX = backTrack.getCoord().xpos;
-                int currentY = backTrack.getCoord().ypos;
-                if (currentX == parentX) {
-                    if (parentY < currentY) {
-                        moves.add(0, "S");
-                    } else {
-                        moves.add(0, "N");
-                    }
-
-                } else {
-                    if (parentX < currentX) {
-                        moves.add(0, "E");
-                    } else {
-                        moves.add(0, "W");
-                    }
-                }
-            }
-            backTrack = parent;
-
-        }
-        return moves;
+        return target;
     }
 
-    // to check neighbors for heuristics
-    public List<Coord> getAdjacentCoordinates(Coord coord, MapTile[][] scanMapTiles, Coord current) {
-        List<Coord> list = new ArrayList<>();
-
-        // coordinates
-        int west = coord.xpos - 1;
-        int east = coord.xpos + 1;
-        int north = coord.ypos - 1;
-        int south = coord.ypos + 1;
-
-        Coord s = new Coord(coord.xpos, south); // S
-        Coord e = new Coord(east, coord.ypos); // E
-        Coord w = new Coord(west, coord.ypos); // W
-        Coord n = new Coord(coord.xpos, north); // N
-
-        list.add(e);
-        list.add(w);
-        list.add(s);
-        list.add(n);
-
-        return list;
-    }
 
     private void updateglobalMap(Coord currentLoc, MapTile[][] scanMapTiles) {
         int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
@@ -464,7 +353,10 @@ public class ROVER_11 {
             if (!globalMap.containsKey(coord)){
                 MapTile tile = CommunicationHelper.convertToMapTile(jsonObj);
 
-                if (tile.getScience() != Science.NONE){
+                // if tile has science is not in sand
+                if (tile.getScience() != Science.NONE && tile.getTerrain() != Terrain.SAND){
+
+                    // then add to the destination
                     if (!destinations.contains(coord))
                         destinations.add(coord);
                 }
@@ -475,42 +367,25 @@ public class ROVER_11 {
     }
 
 
-    public int updateScanMapIndex(int currentLoc, int traceLoc, int edgeSize) {
-        return ((edgeSize - 1) / 2) + (currentLoc - traceLoc);
-    }
+//    public int updateScanMapIndex(int currentLoc, int traceLoc, int edgeSize) {
+//        return ((edgeSize - 1) / 2) + (currentLoc - traceLoc);
+//    }
+//
+//    // not valid to blind walker
+//    private boolean hasNoScience(MapTile mapTile) {
+//        System.out.println("destination maptile: " + mapTile);
+//
+//        if (mapTile == null){
+//            return false;
+//        }
+//        if (mapTile.getScience() == null){
+//            System.out.println("destination not revealed.");
+//            return false;
+//        }
+//        System.out.println("science at destination: " + mapTile.getScience());
+//        return mapTile.getScience() == Science.NONE;
+//    }
 
-    // not valid to blind walker
-    private boolean hasNoScience(MapTile mapTile) {
-        System.out.println("destination maptile: " + mapTile);
-
-        if (mapTile == null){
-            return false;
-        }
-        if (mapTile.getScience() == null){
-            System.out.println("destination not revealed.");
-            return false;
-        }
-        System.out.println("science at destination: " + mapTile.getScience());
-        return mapTile.getScience() == Science.NONE;
-    }
-
-
-    public boolean validateTile(MapTile maptile) {
-//        System.out.println("hasrover: " + maptile.getHasRover() + ", terrain: " + maptile.getTerrain());
-        Terrain terrain = maptile.getTerrain();
-        boolean hasRover = maptile.getHasRover();
-
-        if (hasRover || terrain == Terrain.NONE || terrain == Terrain.SAND) {
-            return false;
-        }
-        return true;
-    }
-
-    public double getDistance(Coord current, Coord dest) {
-        double dx = current.xpos - dest.xpos;
-        double dy = current.ypos - dest.ypos;
-        return Math.sqrt((dx * dx) + (dy * dy)) * 100;
-    }
 
 
     // ################ Support Methods ###########################
@@ -626,59 +501,5 @@ public class ROVER_11 {
     }
 
 
-    // Node class for Astar search
-    public class Node implements Comparable<Node> {
-        private Coord coord;
-        private double data;
-        //   private Node parent;
 
-        public Node(Coord coord, double data) {
-            this.coord = coord;
-            this.data = data;
-        }
-
-        public Coord getCoord() {
-            return coord;
-        }
-
-        public void setCoord(Coord coord) {
-            this.coord = coord;
-        }
-
-        public double getData() {
-            return data;
-        }
-
-        public void setData(double data) {
-            this.data = data;
-        }
-
-        @Override
-        public int compareTo(Node other) {
-            return (int) Math.ceil(this.data - other.data) * 10;
-        }
-
-        // only check by its coordinate, not data
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof Node))
-                return false;
-            if (this == o)
-                return true;
-            Node other = (Node) o;
-            return this.getCoord().equals(other.getCoord());
-        }
-
-        @Override
-        public int hashCode() {
-            return this.getCoord().hashCode();
-        }
-
-        public String toString() {
-            String str = "";
-            str += "coord: " + coord + ", data: " + data;
-            return str;
-        }
-
-    }
 }
