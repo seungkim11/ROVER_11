@@ -219,7 +219,7 @@ public class ROVER_11 {
             trafficCounter++;
 
 
-            // if moving
+            // if STILL MOVING
             if (!moves.isEmpty()) {
                 out.println("MOVE " + moves.get(0));
 
@@ -248,7 +248,9 @@ public class ROVER_11 {
                 }
 
 
-
+                // IF NO MORE MOVES, it can mean several things:
+                // 1. we are at the destination
+                // 2. blocked? error?
             } else {
                 // check if rover is at the destination, drill
                 if (currentLoc.equals(destination)) {
@@ -303,6 +305,7 @@ public class ROVER_11 {
             System.out.println(rovername + " ------------ bottom process control --------------");
         }
     }
+
 
     private Coord getClosestDestination(Coord currentLoc) {
         double max = Double.MAX_VALUE;
@@ -365,27 +368,6 @@ public class ROVER_11 {
             }
         }
     }
-
-
-//    public int updateScanMapIndex(int currentLoc, int traceLoc, int edgeSize) {
-//        return ((edgeSize - 1) / 2) + (currentLoc - traceLoc);
-//    }
-//
-//    // not valid to blind walker
-//    private boolean hasNoScience(MapTile mapTile) {
-//        System.out.println("destination maptile: " + mapTile);
-//
-//        if (mapTile == null){
-//            return false;
-//        }
-//        if (mapTile.getScience() == null){
-//            System.out.println("destination not revealed.");
-//            return false;
-//        }
-//        System.out.println("science at destination: " + mapTile.getScience());
-//        return mapTile.getScience() == Science.NONE;
-//    }
-
 
 
     // ################ Support Methods ###########################
