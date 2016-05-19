@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import enums.RoverDriveType;
 import enums.Science;
 import enums.Terrain;
 import rover_logic.SearchLogic;
@@ -144,7 +145,7 @@ public class ROVER_11 {
 
         SearchLogic search = new SearchLogic();
 
-        // define Communication
+        // ******** define Communication
 //        String url = "http://192.168.1.104:3000/api";
 //        String url = "http://localhost:3000/api";
 
@@ -153,13 +154,16 @@ public class ROVER_11 {
         Communication com = new Communication(url, rovername, corp_secret);
 
 
+        boolean hasJackpot = false;
+
         // Get destinations from Sensor group. I am a driller!
         List<Coord> blockedDestinations = new ArrayList<>();
+
 
         destinations.add(targetLocation);
         //TODO: implement sweep target location
 
-        Coord destination = getClosestDestination(rovergroupStartPosition);
+        Coord destination = null;
 
         // start Rover controller process
         while (true) {
@@ -201,36 +205,39 @@ public class ROVER_11 {
             MapTile[][] scanMapTiles = scanMap.getScanMap();
             updateglobalMap(currentLoc, scanMapTiles);
 
+            //***** communicating with the server
+            System.out.println("post message: " + com.postScanMapTiles(currentLoc, scanMapTiles));
+            if (trafficCounter % 10 == 0) {
+                updateglobalMap(com.getGlobalMap());
+
+                // ********* get closest destination from current location everytime
+                if (!destinations.isEmpty()) {
+                    destination = getClosestDestination(currentLoc);
+                }
+
+            }
+            trafficCounter++;
+
+
 
             // ********** MOVING **********
 
+            // if jackpot visible
+            if (search.targetVisible(currentLoc, targetLocation)) out.println("GATHER");
 
-            // direction Queue for direction
+            // if no destination, wait
+            // TODO: use this time meaningfully
             if (destination == null){
+
                 if (!destinations.isEmpty()){
                     destination = getClosestDestination(currentLoc);
                 }
+
             } else {
-                List<String> moves = search.Astar(currentLoc, destination, scanMapTiles);
+                List<String> moves = search.Astar(currentLoc, destination, scanMapTiles, RoverDriveType.WALKER, globalMap);
                 System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
                 System.out.println(rovername + " moves: " + moves.toString());
-
-
-//             ***** communicating with the server
-                System.out.println("post message: " + com.postScanMapTiles(currentLoc, scanMapTiles));
-                if (trafficCounter % 10 == 0) {
-                    updateglobalMap(com.getGlobalMap());
-
-                    // ********* get closest destination from current location everytime
-                    if (!destinations.isEmpty()) {
-                        destination = getClosestDestination(currentLoc);
-                    }
-
-                }
-                trafficCounter++;
-
-                System.out.println("destinations: " + destinations);
-
+//
 
                 // if STILL MOVING
                 if (!moves.isEmpty()) {
@@ -238,11 +245,11 @@ public class ROVER_11 {
 
                     // if rover is next to the target
                     // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
-                    if (search.getDistance(currentLoc, destination) < 101) {
-                        System.out.println("Can reach Target. Going ");
+                    if (search.getDistance(currentLoc, destination) < 301) {
+                        System.out.println("Target visible.");
 
                         // if destination is walkable
-                        if (search.validateTile(globalMap.get(destination))) {
+                        if (search.validateTile(globalMap.get(destination), RoverDriveType.WALKER)) {
                             System.out.println("Target Reachable");
                         } else {
                             // Target is not walkable (hasRover, or sand)
@@ -254,6 +261,7 @@ public class ROVER_11 {
                             blockedDestinations.add(destination);
 
                             // move to new destination
+                            destinations.remove(destination);
                             destination = getClosestDestination(currentLoc);
                             System.out.println("Target blocked. Switch target to: " + destination);
                         }
@@ -280,16 +288,12 @@ public class ROVER_11 {
 
                     } else {
 
-                        // TODO: path blocked.
-//                    String move = cardinals[(int) (Math.random() * 4)];
-//                    System.out.println("MOVE " + move);
-//                    out.println("MOVE " + move);
                     }
                 }
             }
 
 
-
+            System.out.println("destinations: " + destinations);
 
 
             // another call for current location
