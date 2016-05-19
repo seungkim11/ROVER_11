@@ -12,18 +12,20 @@ import common.ScanMap;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import enums.Science;
-import enums.Terrain;
-import rover_logic.Node;
-import rover_logic.SearchLogic;
-import supportTools.CommunicationHelper;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import enums.Science;
+import enums.Terrain;
+import rover_logic.SearchLogic;
+import supportTools.CommunicationHelper;
 
 /**
  * Created by samskim on 4/21/16.
@@ -143,9 +145,13 @@ public class ROVER_11 {
         SearchLogic search = new SearchLogic();
 
         // define Communication
-        // String url = "https://localhost:3000/api/global";
-        String url = "http://23.251.155.186:3000/api/global";
-        Communication com = new Communication(url);
+//        String url = "http://192.168.1.104:3000/api";
+//        String url = "http://localhost:3000/api";
+
+        String url = "http://23.251.155.186:3000/api";
+        String corp_secret = "0FSj7Pn23t";
+        Communication com = new Communication(url, rovername, corp_secret);
+
 
         // Get destinations from Sensor group. I am a driller!
         List<Coord> blockedDestinations = new ArrayList<>();
@@ -198,81 +204,92 @@ public class ROVER_11 {
 
             // ********** MOVING **********
 
+
             // direction Queue for direction
-            List<String> moves = search.Astar(currentLoc, destination, scanMapTiles);
-
-            System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
-            System.out.println(rovername + " moves: " + moves.toString());
-
-
-            // ***** communicating with the server
-            com.postScanMapTiles(currentLoc, scanMapTiles);
-            if (trafficCounter % 10 == 0){
-                updateglobalMap(com.getGlobalMap());
-
-                // ********* get closest destination from current location everytime
+            if (destination == null){
                 if (!destinations.isEmpty()){
                     destination = getClosestDestination(currentLoc);
                 }
+            } else {
+                List<String> moves = search.Astar(currentLoc, destination, scanMapTiles);
+                System.out.println(rovername + "currentLoc: " + currentLoc + ", destination: " + destination);
+                System.out.println(rovername + " moves: " + moves.toString());
 
-            }
-            trafficCounter++;
 
+//             ***** communicating with the server
+                System.out.println("post message: " + com.postScanMapTiles(currentLoc, scanMapTiles));
+                if (trafficCounter % 10 == 0) {
+                    updateglobalMap(com.getGlobalMap());
 
-            // if STILL MOVING
-            if (!moves.isEmpty()) {
-                out.println("MOVE " + moves.get(0));
-
-                // if rover is next to the target
-                // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
-                if (search.getDistance(currentLoc, destination) < 101){
-                    System.out.println("Can reach Target. Going ");
-
-                    // if destination is walkable
-                    if (search.validateTile(globalMap.get(destination))){
-                        System.out.println("Target Reachable");
-                    }else{
-                        // Target is not walkable (hasRover, or sand)
-                        // then go to next destination, push current destination to end
-                        // TODO: handle the case when the destiation is blocked permanently
-                        // TODO: also, what if the destination is already taken? update globalMap and dont go there
-
-                        // blocked destination is added to blockedDestianions queue
-                        blockedDestinations.add(destination);
-
-                        // move to new destination
+                    // ********* get closest destination from current location everytime
+                    if (!destinations.isEmpty()) {
                         destination = getClosestDestination(currentLoc);
-                        System.out.println("Target blocked. Switch target to: " + destination);
                     }
 
                 }
+                trafficCounter++;
+
+                System.out.println("destinations: " + destinations);
 
 
-                // IF NO MORE MOVES, it can mean several things:
-                // 1. we are at the destination
-                // 2. blocked? error?
-            } else {
-                // check if rover is at the destination, drill
-                if (currentLoc.equals(destination)) {
-                    out.println("GATHER");
-                    System.out.println(rovername + " arrived destination. Now gathering.");
-                    if (!destinations.isEmpty()) {
-                        //remove from destinations
-                        destinations.remove(destination);
-                        destination = getClosestDestination(currentLoc);
-                        System.out.println(rovername + " going to next destination at: " + destination);
-                    } else {
-                        System.out.println("Nowhere else to go. Relax..");
+                // if STILL MOVING
+                if (!moves.isEmpty()) {
+                    out.println("MOVE " + moves.get(0));
+
+                    // if rover is next to the target
+                    // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
+                    if (search.getDistance(currentLoc, destination) < 101) {
+                        System.out.println("Can reach Target. Going ");
+
+                        // if destination is walkable
+                        if (search.validateTile(globalMap.get(destination))) {
+                            System.out.println("Target Reachable");
+                        } else {
+                            // Target is not walkable (hasRover, or sand)
+                            // then go to next destination, push current destination to end
+                            // TODO: handle the case when the destiation is blocked permanently
+                            // TODO: also, what if the destination is already taken? update globalMap and dont go there
+
+                            // blocked destination is added to blockedDestianions queue
+                            blockedDestinations.add(destination);
+
+                            // move to new destination
+                            destination = getClosestDestination(currentLoc);
+                            System.out.println("Target blocked. Switch target to: " + destination);
+                        }
+
                     }
 
-                } else {
 
-                      // TODO: path blocked.
+                    // IF NO MORE MOVES, it can mean several things:
+                    // 1. we are at the destination
+                    // 2. blocked? error?
+                } else {
+                    // check if rover is at the destination, drill
+                    if (currentLoc.equals(destination)) {
+                        out.println("GATHER");
+                        System.out.println(rovername + " arrived destination. Now gathering.");
+                        if (!destinations.isEmpty()) {
+                            //remove from destinations
+                            destinations.remove(destination);
+                            destination = getClosestDestination(currentLoc);
+                            System.out.println(rovername + " going to next destination at: " + destination);
+                        } else {
+                            System.out.println("Nowhere else to go. Relax..");
+                        }
+
+                    } else {
+
+                        // TODO: path blocked.
 //                    String move = cardinals[(int) (Math.random() * 4)];
 //                    System.out.println("MOVE " + move);
 //                    out.println("MOVE " + move);
+                    }
                 }
             }
+
+
+
 
 
             // another call for current location
@@ -311,9 +328,9 @@ public class ROVER_11 {
         double max = Double.MAX_VALUE;
         Coord target = null;
 
-        for (Coord desitnation: destinations){
+        for (Coord desitnation : destinations) {
             double distance = SearchLogic.getDistance(currentLoc, desitnation);
-            if (distance < max){
+            if (distance < max) {
                 max = distance;
                 target = desitnation;
             }
@@ -345,7 +362,7 @@ public class ROVER_11 {
     // get data from server and update field map
     private void updateglobalMap(JSONArray data) {
 
-        for (Object o: data){
+        for (Object o : data) {
 
             JSONObject jsonObj = (JSONObject) o;
             int x = (int) (long) jsonObj.get("x");
@@ -353,11 +370,11 @@ public class ROVER_11 {
             Coord coord = new Coord(x, y);
 
             // only bother to save if our globalMap doesn't contain the coordinate
-            if (!globalMap.containsKey(coord)){
+            if (!globalMap.containsKey(coord)) {
                 MapTile tile = CommunicationHelper.convertToMapTile(jsonObj);
 
-                // if tile has science is not in sand
-                if (tile.getScience() != Science.NONE && tile.getTerrain() != Terrain.SAND){
+                // if tile has science AND is not in sand
+                if (tile.getScience() != Science.NONE && tile.getTerrain() != Terrain.SAND) {
 
                     // then add to the destination
                     if (!destinations.contains(coord))
@@ -462,7 +479,7 @@ public class ROVER_11 {
     public static Coord extractLocationFromString(String sStr) {
         int indexOf;
         indexOf = sStr.indexOf(" ");
-        sStr = sStr.substring(indexOf +1);
+        sStr = sStr.substring(indexOf + 1);
         if (sStr.lastIndexOf(" ") != -1) {
             String xStr = sStr.substring(0, sStr.lastIndexOf(" "));
             //System.out.println("extracted xStr " + xStr);
@@ -478,10 +495,14 @@ public class ROVER_11 {
      * Runs the client
      */
     public static void main(String[] args) throws Exception {
-        ROVER_11 client = new ROVER_11();
+        ROVER_11 client;
+        if (args.length > 0)
+            client = new ROVER_11(args[0]);
+        else {
+            client = new ROVER_11();
+        }
         client.run();
     }
-
 
 
 }

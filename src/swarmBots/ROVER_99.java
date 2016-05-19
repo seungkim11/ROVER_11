@@ -1,12 +1,5 @@
 package swarmBots;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.ArrayList;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -14,6 +7,14 @@ import com.google.gson.reflect.TypeToken;
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+
 import enums.Terrain;
 
 
@@ -102,7 +103,7 @@ public class ROVER_99 {
 		String currentDir = cardinals[0];
 		Coord currentLoc = null;
 		Coord previousLoc = null;
-		
+
 
 		// start Rover controller process
 		while (true) {
@@ -141,11 +142,11 @@ public class ROVER_99 {
 			//System.out.println("ROVER_99 sending SCAN request");
 			this.doScan();
 			scanMap.debugPrintMap();
-			
-			
-			
 
-			
+
+
+
+
 			// MOVING
 			
 			if(stuck == true){
