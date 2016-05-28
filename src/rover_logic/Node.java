@@ -9,7 +9,7 @@ import common.Coord;
 public class Node implements Comparable<Node> {
     private Coord coord;
     private double data;
-    //   private Node parent;
+    //private Node parent;
 
     public Node(Coord coord, double data) {
         this.coord = coord;

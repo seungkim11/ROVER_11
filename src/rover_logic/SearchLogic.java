@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import enums.RoverDriveType;
 import enums.Terrain;
-import swarmBots.ROVER_11;
 
 /**
  * Created by samskim on 5/12/16.
@@ -21,7 +21,7 @@ import swarmBots.ROVER_11;
 public class SearchLogic {
     // ******* Search Methods
 
-    public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles) {
+    public List<String> Astar(Coord current, Coord dest, MapTile[][] scanMapTiles, RoverDriveType drive, Map<Coord, MapTile> globalMap) {
         PriorityQueue<Node> open = new PriorityQueue<>();
         Set<Node> closed = new HashSet<>();
 
@@ -36,24 +36,24 @@ public class SearchLogic {
         Node u = null;
         while (!open.isEmpty()) {
 
-            u = open.poll(); // poll the closest one
-            closed.add(u); // put it in closed list, to not check anymore
+        u = open.poll(); // poll the closest one
+        closed.add(u); // put it in closed list, to not check anymore
 
-            // if u is destination, break;
-            if (u.getCoord().equals(dest)) {
+        // if u is destination, break;
+        if (u.getCoord().equals(dest)) {
                 destNode = u;
                 break;
-            }
+        }
 
-            for (Coord c : getAdjacentCoordinates(u.getCoord(), scanMapTiles, current)) {
-                // if this node hasn't already been checked
-                if (!closed.contains(new Node(c, 0)) && ROVER_11.globalMap.get(c) != null && validateTile(ROVER_11.globalMap.get(c))) {
+        for (Coord c : getAdjacentCoordinates(u.getCoord(), scanMapTiles, current)) {
+             // if this node hasn't already been checked
+             if (!closed.contains(new Node(c, 0)) && globalMap.get(c) != null && validateTile(globalMap.get(c), drive)) {
 
-                    // TODO: MAYBE: assess cost depending on the tile's terrain, science, etc
-                    double g = u.getData() + 1; // each move cost is 1, for now
-                    double h = getDistance(c, dest); // distance from neighbor to destination
-                    double f = h + g; // total heuristic of this neighbor c
-                    Node n = new Node(c, f);
+             // TODO: MAYBE: assess cost depending on the tile's terrain, science, etc
+             double g = u.getData() + 1; // each move cost is 1, for now
+             double h = getDistance(c, dest); // distance from neighbor to destination
+             double f = h + g; // total heuristic of this neighbor c
+             Node n = new Node(c, f);
 
                     // for back tracing, store in hashmap
                     if (distanceMemory.containsKey(n)) {
@@ -161,15 +161,31 @@ public class SearchLogic {
         return Math.sqrt((dx * dx) + (dy * dy)) * 100;
     }
 
-    public boolean validateTile(MapTile maptile) {
+    public boolean validateTile(MapTile maptile, RoverDriveType drive) {
 //        System.out.println("hasrover: " + maptile.getHasRover() + ", terrain: " + maptile.getTerrain());
         Terrain terrain = maptile.getTerrain();
         boolean hasRover = maptile.getHasRover();
 
-        if (hasRover || terrain == Terrain.NONE || terrain == Terrain.SAND) {
+        if (hasRover || terrain == Terrain.NONE) {
             return false;
+        }
+
+        if (terrain == Terrain.SAND) {
+            if (drive == RoverDriveType.WALKER || drive == RoverDriveType.WHEELS) return false;
+        }
+
+        if (terrain == Terrain.ROCK) {
+            if (drive == RoverDriveType.TREADS || drive == RoverDriveType.WHEELS) return false;
         }
         return true;
     }
+
+    public boolean targetVisible(Coord currentLoc, Coord target){
+        int dx = Math.abs(currentLoc.xpos - target.xpos);
+        int dy = Math.abs(currentLoc.ypos - target.ypos);
+        if (dx <= 3 && dy <= 3) return true;
+        return false;
+    }
+
 
 }

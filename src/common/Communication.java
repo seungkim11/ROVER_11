@@ -29,7 +29,6 @@ public class Communication {
         this.parser = new JSONParser();
         this.rovername = rovername;
         this.corp_secret = corp_secret;
-
     }
 
     public String postScanMapTiles(Coord currentLoc, MapTile[][] scanMapTiles) {
@@ -41,7 +40,7 @@ public class Communication {
             obj = new URL(url + "/global");
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
-            //add reuqest header
+            //add request header
             con.setDoOutput(true);
             con.setRequestMethod("POST");
             con.setRequestProperty("Rover-Name", rovername);
@@ -139,24 +138,19 @@ public class Communication {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return parseResponseStr(responseStr);
     }
 
     public JSONArray parseResponseStr(String response) {
         JSONArray data = null;
         try {
-            data = (JSONArray) parser.parse(response);
-
+        	data = (JSONArray) parser.parse(response);
             for (Object obj : data) {
                 JSONObject json = (JSONObject) obj;
             }
-
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
         return data;
     }
-
 }
