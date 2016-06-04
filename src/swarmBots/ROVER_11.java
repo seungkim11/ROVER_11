@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import enums.RoverDriveType;
 import enums.Science;
@@ -43,7 +44,7 @@ public class ROVER_11 {
     public static Map<Coord, MapTile> globalMap;
     List<Coord> destinations;
     long trafficCounter;
-
+    static final long walkerDelay = TimeUnit.MILLISECONDS.toMillis(1230);
 
     public ROVER_11() {
         // constructor
@@ -70,6 +71,8 @@ public class ROVER_11 {
      * Connects to the server then enters the processing loop.
      */
     private void run() throws IOException, InterruptedException {
+
+
 
         // Make connection and initialize streams
         //TODO - need to close this socket
@@ -147,15 +150,20 @@ public class ROVER_11 {
 
         // ******** define Communication
 //        String url = "http://192.168.1.104:3000/api";
-//        String url = "http://localhost:3000/api";
+        String url = "http://localhost:3000/api";
 
-        String url = "http://23.251.155.186:3000/api";
-        String corp_secret = "0FSj7Pn23t";
+//        String url = "http://23.251.155.186:3000/api";
+//        String corp_secret = "0FSj7Pn23t";
+        String corp_secret = "sR5A9tD0X7";
 
         Communication com = new Communication(url, rovername, corp_secret);
 
+        boolean beenToJackpot = false;
+        boolean ranSweep = false;
 
-        boolean hasJackpot = false;
+        long startTime;
+        long estimatedTime;
+        long sleepTime2;
 
         // Get destinations from Sensor group. I am a driller!
         List<Coord> blockedDestinations = new ArrayList<>();
@@ -166,8 +174,12 @@ public class ROVER_11 {
 
         Coord destination = null;
 
+
+
         // start Rover controller process
         while (true) {
+
+            startTime = System.nanoTime();
 
             // currently the requirements allow sensor calls to be made with no
             // simulated resource cost
@@ -208,7 +220,7 @@ public class ROVER_11 {
 
             //***** communicating with the server
             System.out.println("post message: " + com.postScanMapTiles(currentLoc, scanMapTiles));
-            if (trafficCounter % 10 == 0) {
+            if (trafficCounter % 5 == 0) {
                 updateglobalMap(com.getGlobalMap());
 
                 // ********* get closest destination from current location everytime
@@ -224,8 +236,18 @@ public class ROVER_11 {
             // ********** MOVING **********
 
             // if jackpot visible
-            if (search.targetVisible(currentLoc, targetLocation)) out.println("GATHER");
+            if (search.targetVisible(currentLoc, targetLocation)) {
+                out.println("GATHER");
+                if (!beenToJackpot){
+                    beenToJackpot = true;
+                    addJackPotDestinations(targetLocation);
+                }
+            }
 
+
+            if (!beenToJackpot){
+                destination = targetLocation;
+            }
 
             // if no destination, wait
             // TODO: use this time meaningfully
@@ -234,6 +256,7 @@ public class ROVER_11 {
                 if (!destinations.isEmpty()){
                     destination = getClosestDestination(currentLoc);
                 }
+                out.println("GATHER");
 
             } else {
                 List<String> moves = search.Astar(currentLoc, destination, scanMapTiles, RoverDriveType.WALKER, globalMap);
@@ -250,6 +273,7 @@ public class ROVER_11 {
                     if (search.targetVisible(currentLoc, destination)) {
 
                         com.markTileForGather(destination);
+                        System.out.println("Marked Target");
 
                         // if destination is walkable
                         if (search.validateTile(globalMap.get(destination), RoverDriveType.WALKER)) {
@@ -324,10 +348,32 @@ public class ROVER_11 {
             // TODO - logic to calculate where to move next
 
 
-            Thread.sleep(sleepTime);
+            estimatedTime = System.nanoTime() - startTime;
+            sleepTime2 = walkerDelay - TimeUnit.NANOSECONDS.toMillis(estimatedTime);
+
+            System.out.println("walker delay: " + walkerDelay);
+            System.out.println("estimated time: " + estimatedTime);
+            System.out.println("to millies: " + TimeUnit.NANOSECONDS.toMillis(estimatedTime));
+            System.out.println("sleepTime2 : " + sleepTime2);
+
+            if (sleepTime2 > 0)
+            Thread.sleep(sleepTime2);
 
             System.out.println(rovername + " ------------ bottom process control --------------");
         }
+    }
+
+    private void addJackPotDestinations(Coord jackpot) {
+        int xp = jackpot.xpos-3;
+        int yp = jackpot.ypos-3;
+
+        for (int i = 0 ; i < 7; i = i + 3){
+            for (int j = 0; j < 7; j = j + 3){
+                Coord coord = new Coord(xp + i, yp + j);
+                destinations.add(coord);
+            }
+        }
+
     }
 
 
