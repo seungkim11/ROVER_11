@@ -151,6 +151,7 @@ public class ROVER_11 {
 
         String url = "http://23.251.155.186:3000/api";
         String corp_secret = "0FSj7Pn23t";
+
         Communication com = new Communication(url, rovername, corp_secret);
 
 
@@ -160,7 +161,7 @@ public class ROVER_11 {
         List<Coord> blockedDestinations = new ArrayList<>();
 
 
-        destinations.add(targetLocation);
+//        destinations.add(targetLocation);
         //TODO: implement sweep target location
 
         Coord destination = null;
@@ -225,6 +226,7 @@ public class ROVER_11 {
             // if jackpot visible
             if (search.targetVisible(currentLoc, targetLocation)) out.println("GATHER");
 
+
             // if no destination, wait
             // TODO: use this time meaningfully
             if (destination == null){
@@ -245,8 +247,9 @@ public class ROVER_11 {
 
                     // if rover is next to the target
                     // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
-                    if (search.getDistance(currentLoc, destination) < 301) {
-                        System.out.println("Target visible.");
+                    if (search.targetVisible(currentLoc, destination)) {
+
+                        com.markTileForGather(destination);
 
                         // if destination is walkable
                         if (search.validateTile(globalMap.get(destination), RoverDriveType.WALKER)) {
@@ -369,6 +372,7 @@ public class ROVER_11 {
         for (Object o : data) {
 
             JSONObject jsonObj = (JSONObject) o;
+            boolean marked = (jsonObj.get("g") != null) ? true : false;
             int x = (int) (long) jsonObj.get("x");
             int y = (int) (long) jsonObj.get("y");
             Coord coord = new Coord(x, y);
@@ -381,7 +385,7 @@ public class ROVER_11 {
                 if (tile.getScience() != Science.NONE && tile.getTerrain() != Terrain.SAND) {
 
                     // then add to the destination
-                    if (!destinations.contains(coord))
+                    if (!destinations.contains(coord) && !marked)
                         destinations.add(coord);
                 }
 

@@ -3,4 +3,4 @@
 #gradle related stuff
 .idea/
 .gradle/
-out/production/
+out/

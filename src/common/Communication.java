@@ -159,4 +159,47 @@ public class Communication {
         return data;
     }
 
+    public String markTileForGather(Coord coord){
+        int x = coord.xpos;
+        int y = coord.ypos;
+
+        String charset = "UTF-8";
+        URL obj = null;
+        try {
+            obj = new URL(url + "/science/gather/" + x + "/" + y);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            //add reuqest header
+            con.setDoOutput(true);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Rover-Name", rovername);
+            con.setRequestProperty("Corp-Secret", corp_secret);
+            con.setRequestProperty("Content-Type", "application/json");
+
+            int responseCode = con.getResponseCode();
+            System.out.println("\nSending 'POST' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            return response.toString();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
 }
