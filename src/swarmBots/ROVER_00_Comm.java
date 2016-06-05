@@ -153,7 +153,7 @@ public class ROVER_00_Comm {
             // ******** communication server
 //            String url = "http://23.251.155.186:3000/api";
             String url = "http://localhost:3000/api";
-            String corp_secret = "sR5A9tD0X7";
+            String corp_secret = "gz5YhL70a2";
             Communication com = new Communication(url, rovername, corp_secret);
             int comm_count = 0;
 

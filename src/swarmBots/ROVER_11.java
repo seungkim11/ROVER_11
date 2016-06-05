@@ -154,7 +154,7 @@ public class ROVER_11 {
 
 //        String url = "http://23.251.155.186:3000/api";
 //        String corp_secret = "0FSj7Pn23t";
-        String corp_secret = "sR5A9tD0X7";
+        String corp_secret = "gz5YhL70a2";
 
         Communication com = new Communication(url, rovername, corp_secret);
 
@@ -272,7 +272,8 @@ public class ROVER_11 {
                     // System.out.println("Rover near destiation. distance: " + getDistance(currentLoc, destination));
                     if (search.targetVisible(currentLoc, destination)) {
 
-                        com.markTileForGather(destination);
+                        // server broke
+//                        com.markTileForGather(destination);
                         System.out.println("Marked Target");
 
                         // if destination is walkable
@@ -350,14 +351,7 @@ public class ROVER_11 {
 
             estimatedTime = System.nanoTime() - startTime;
             sleepTime2 = walkerDelay - TimeUnit.NANOSECONDS.toMillis(estimatedTime);
-
-            System.out.println("walker delay: " + walkerDelay);
-            System.out.println("estimated time: " + estimatedTime);
-            System.out.println("to millies: " + TimeUnit.NANOSECONDS.toMillis(estimatedTime));
-            System.out.println("sleepTime2 : " + sleepTime2);
-
-            if (sleepTime2 > 0)
-            Thread.sleep(sleepTime2);
+            if (sleepTime2 > 0) Thread.sleep(sleepTime2);
 
             System.out.println(rovername + " ------------ bottom process control --------------");
         }
@@ -367,8 +361,8 @@ public class ROVER_11 {
         int xp = jackpot.xpos-3;
         int yp = jackpot.ypos-3;
 
-        for (int i = 0 ; i < 7; i = i + 3){
-            for (int j = 0; j < 7; j = j + 3){
+        for (int i = 0 ; i < 7; i = i + 6){
+            for (int j = 0; j < 7; j = j + 6){
                 Coord coord = new Coord(xp + i, yp + j);
                 destinations.add(coord);
             }
