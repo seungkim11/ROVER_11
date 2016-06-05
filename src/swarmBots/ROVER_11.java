@@ -151,9 +151,6 @@ public class ROVER_11 {
         // ******** define Communication
 //        String url = "http://192.168.1.104:3000/api";
         String url = "http://localhost:3000/api";
-
-//        String url = "http://23.251.155.186:3000/api";
-//        String corp_secret = "0FSj7Pn23t";
         String corp_secret = "gz5YhL70a2";
 
         Communication com = new Communication(url, rovername, corp_secret);
