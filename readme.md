@@ -6,7 +6,7 @@ peter rodriguez
 prashant krishnan  
 arpan patel  
 
-This project is an **A.I. competition** between CSULA graduate students to implement Mars Swarm Robots to explore and collect hidden minerals on the Martian surface.  
+This project is an **A.I. competition** between 70 CSULA graduate students to implement Mars Swarm Robots to explore and collect hidden minerals on the Martian surface.  
 Mars surface consists of **soil, sand**, and **rock** - depending on the Swarm Bot's wheel, it can/cannot move through them.  
 Rovers are able to communicate through [communication server][1], by collectively helping each other discover the map and hidden minerals.
 
